@@ -2,7 +2,7 @@ import streamlit as st
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.linearModel import LinearRegression
+from sklearn.linear_model import LinearRegression
 import pandas as pd
 from textblob import TextBlob
 
@@ -55,8 +55,7 @@ if st.button("Analyze"):
                 if avg_sentiment > 0.1:
                     st.success(f"**BULLISH** ({positive_count}/5) 🎈")
                     st.toast("BULLISH ALERT! 🎉", icon="🎉")
-                    st.markdown(
-                        """
+                    st.markdown("""
                         <script>
                         const balloons = () => {
                             for(let i=0; i<30; i++){
@@ -76,4 +75,23 @@ if st.button("Analyze"):
                         </script>
                         <style>
                         @keyframes float {
-                            to {
+                            to { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info(f"**Neutral** ({positive_count}/5)")
+
+                for h in headlines[:3]:
+                    st.markdown(f"• {h}")
+
+            current = prices[-1]
+            forecast = pred[-1]
+            change = forecast - current
+            pct = (change / current) * 100
+            if change > 0:
+                st.success(f"**AI Predicts {ticker} in 7 days: ${forecast:.2f}** (+{pct:.1f}%)")
+            else:
+                st.warning(f"**AI Predicts {ticker} in 7 days: ${forecast:.2f}** ({pct:.1f}%)")
+
+st.caption("Built by Jack Evans | Moorpark College AS-T Business Admin | Nov 2025")
