@@ -16,7 +16,7 @@ ticker = st.text_input("Enter Stock Ticker (e.g., NVDA, AAPL)", "NVDA").upper().
 period = st.selectbox("History Period", ["1mo", "3mo", "6mo", "1y"], index=1)
 
 if st.button("Analyze"):
-    with st.spinner("Fetching data & news..."):
+    with st.spinner("Fetching data..."):
         # === STOCK DATA ===
         data = yf.Ticker(ticker).history(period=period)
         if data.empty or len(data) < 7:
@@ -30,7 +30,7 @@ if st.button("Analyze"):
             pred = model.predict(future)
             future_dates = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), periods=7)
 
-            # === MOCK NEWS SENTIMENT ===
+            # === MOCK NEWS ===
             headlines = [
                 f"{ticker} surges on strong earnings",
                 f"Analysts raise price target for {ticker}",
@@ -58,10 +58,9 @@ if st.button("Analyze"):
             with col2:
                 st.markdown("### News Sentiment")
                 if avg_sentiment > 0.1:
-                    st.success(f"**Bullish** ({positive_count}/5) 🎈🎉")
-                    st.markdown("### 🎈 **BULLISH ALERT!** 🎈")
-                    # Force visual pop
-                    st.markdown("<h1 style='text-align: center; color: green;'>🎈🎈🎈</h1>", unsafe_allow_html=True)
+                    st.success(f"**BULLISH** ({positive_count}/5) 🎈")
+                    st.toast("BULLISH ALERT! 🎈", icon="🎉")
+                    st.markdown("<h1 style='text-align: center; font-size: 60px;'>🎈🎈🎈</h1>", unsafe_allow_html=True)
                 elif avg_sentiment < -0.1:
                     st.warning(f"**Bearish** ({positive_count}/5)")
                 else:
@@ -70,7 +69,7 @@ if st.button("Analyze"):
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
 
-            # === PREDICTION RESULT ===
+            # === PREDICTION ===
             current = prices[-1]
             forecast = pred[-1]
             change = forecast - current
