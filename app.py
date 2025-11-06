@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
-import requests
 from textblob import TextBlob
 
 # Page config
@@ -29,8 +28,4 @@ if st.button("Analyze"):
             model.fit(days, prices)
             future = np.arange(len(prices), len(prices)+7).reshape(-1, 1)
             pred = model.predict(future)
-            future_dates = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), periods=7)
-
-            # === NEWS SENTIMENT (FREE MOCK DATA) ===
-            headlines = [
-                f"{ticker} surges on strong
+            future_dates = pd.date_range(start=data.index
