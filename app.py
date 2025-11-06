@@ -30,7 +30,7 @@ if st.button("Analyze"):
             pred = model.predict(future)
             future_dates = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), periods=7)
 
-            # === MOCK NEWS SENTIMENT (No API needed) ===
+            # === MOCK NEWS SENTIMENT ===
             headlines = [
                 f"{ticker} surges on strong earnings",
                 f"Analysts raise price target for {ticker}",
@@ -58,8 +58,10 @@ if st.button("Analyze"):
             with col2:
                 st.markdown("### News Sentiment")
                 if avg_sentiment > 0.1:
-                    st.success(f"**Bullish** ({positive_count}/5)")
-                    st.balloons()
+                    st.success(f"**Bullish** ({positive_count}/5) 🎈🎉")
+                    st.markdown("### 🎈 **BULLISH ALERT!** 🎈")
+                    # Force visual pop
+                    st.markdown("<h1 style='text-align: center; color: green;'>🎈🎈🎈</h1>", unsafe_allow_html=True)
                 elif avg_sentiment < -0.1:
                     st.warning(f"**Bearish** ({positive_count}/5)")
                 else:
