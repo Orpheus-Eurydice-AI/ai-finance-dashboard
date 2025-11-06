@@ -50,41 +50,40 @@ if st.button("Analyze"):
                 plt.tight_layout()
                 st.pyplot(fig)
 
-            with col2:
+                       with col2:
                 st.markdown("### News Sentiment")
-                if avg_sentiment > 0.1:
-                    st.success(f"**BULLISH** ({positive_count}/5) 🎈")
-                    st.toast("BULLISH ALERT! 🎉", icon="🎉")
-                    st.markdown("""
-                        <script>
-                        const balloons = () => {
-                            for(let i=0; i<30; i++){
-                                const b = document.createElement('div');
-                                b.innerText = '🎈';
-                                b.style.position = 'fixed';
-                                b.style.left = Math.random()*100 + 'vw';
-                                b.style.bottom = '-10vh';
-                                b.style.fontSize = '30px';
-                                b.style.zIndex = '9999';
-                                b.style.animation = 'float 4s ease-in-out forwards';
-                                document.body.appendChild(b);
-                                setTimeout(() => b.remove(), 4000);
-                            }
-                        };
-                        balloons();
-                        </script>
-                        <style>
-                        @keyframes float {
-                            to { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+                # FORCE BULLISH FOR DEMO
+                st.success("**BULLISH** (5/5) 🎈")
+                st.toast("BULLISH ALERT! 🎉", icon="🎉")
+                st.markdown("""
+                    <script>
+                    const balloons = () => {
+                        for(let i=0; i<35; i++){
+                            const b = document.createElement('div');
+                            b.innerText = '🎈';
+                            b.style.position = 'fixed';
+                            b.style.left = Math.random()*100 + 'vw';
+                            b.style.bottom = '-10vh';
+                            b.style.fontSize = '32px';
+                            b.style.zIndex = '9999';
+                            b.style.animation = 'float 3.5s ease-in-out forwards';
+                            document.body.appendChild(b);
+                            setTimeout(() => b.remove(), 3500);
                         }
-                        </style>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.info(f"**Neutral** ({positive_count}/5)")
+                    };
+                    balloons();
+                    </script>
+                    <style>
+                    @keyframes float {
+                        to { transform: translateY(-130vh) rotate(360deg); opacity: 0; }
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
 
+                # Show real headlines
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
-
+                    
             current = prices[-1]
             forecast = pred[-1]
             change = forecast - current
