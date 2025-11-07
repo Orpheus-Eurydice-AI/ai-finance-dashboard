@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
-from textblob import TextBlob
 import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
@@ -76,7 +75,7 @@ if st.button("Analyze"):
                 st.markdown("### News Sentiment")
                 st.success("**BULLISH** (5/5)")
 
-                # UNBLOCKABLE BALLOONS
+                # UNBLOCKABLE BALLOONS + TOAST
                 components.html("""
                     <script>
                     for(let i=0; i<50; i++){
@@ -99,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="")
+                st.toast("BULLISH ALERT!", icon="🎉")  # Valid emoji
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -107,11 +106,4 @@ if st.button("Analyze"):
             current = prices[-1]
             forecast = pred[-1]
             pct = (forecast - current) / current * 100
-            st.success(f"**AI Predicts {ticker}: ${forecast:.2f} (+{pct:.1f}%)**")
-
-# Watchlist
-st.markdown("### My Watchlist")
-for t in st.session_state.watchlist:
-    st.write(f"• {t}")
-
-st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
+            st.success(f"**…
