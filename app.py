@@ -111,7 +111,7 @@ with tab1:
                 if pct > 5:
                     st.success("**STRONG BUY SIGNAL**")
 
-# ——— TAB 2: BACKTESTING ENGINE ———
+# ——— TAB 2: BACKTESTING ENGINE (FIXED) ———
 with tab2:
     st.markdown("### Backtest Any Strategy")
     back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
@@ -128,66 +128,75 @@ with tab2:
     if st.button("Run Backtest"):
         with st.spinner("Running backtest..."):
             data = yf.download(back_ticker, start=start_date, end=end_date)
-            if data.empty:
-                st.error("No data")
+            if data.empty or len(data) < 2:
+                st.error("Not enough data")
             else:
-                prices = data['Close']
-                dates = prices.index
+                prices = data['Close'].dropna()
+                if len(prices) == 0:
+                    st.error("No price data")
+                else:
+                    first_price = prices.iloc[0]
+                    last_price = prices.iloc[-1]
+                    dates = prices.index
 
-                if strategy == "Buy & Hold":
-                    shares = initial / prices.iloc[0]
-                    final_value = shares * prices.iloc[-1]
-                    pnl = final_value - initial
+                    if strategy == "Buy & Hold":
+                        shares = initial / first_price
+                        final_value = shares * last_price
+                        pnl = final_value - initial
 
-                elif strategy == "Dollar Cost Average (Monthly)":
-                    monthly_invest = initial / len(pd.date_range(start=start_date, end=end_date, freq='MS'))
-                    shares = 0
-                    investment = 0
-                    monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
-                    for m in monthly_dates:
-                        if m in prices.index:
-                            price = prices[m]
-                            shares += monthly_invest / price
-                            investment += monthly_invest
-                    final_value = shares * prices.iloc[-1]
-                    pnl = final_value - investment
+                    elif strategy == "Dollar Cost Average (Monthly)":
+                        monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
+                        monthly_dates = monthly_dates[monthly_dates <= end_date]
+                        num_months = len(monthly_dates)
+                        if num_months == 0:
+                            st.error("No months in range")
+                            final_value = initial
+                            pnl = 0
+                        else:
+                            monthly_invest = initial / num_months
+                            shares = 0
+                            investment = 0
+                            portfolio_values = []
+                            cum_shares = 0
+                            cum_invest = 0
+                            for date in dates:
+                                if date in monthly_dates and cum_invest < initial:
+                                    price = prices.loc[date]
+                                    cum_shares += monthly_invest / price
+                                    cum_invest += monthly_invest
+                                portfolio_values.append(cum_shares * prices.loc[date])
+                            final_value = cum_shares * last_price
+                            pnl = final_value - initial
 
-                cagr = ((final_value / initial) ** (1 / ((end_date - start_date).days / 365.25)) - 1) * 100
-                returns = prices.pct_change().dropna()
-                sharpe = (returns.mean() * 252) / (returns.std(ddof=0) * np.sqrt(252)) if returns.std(ddof=0) != 0 else 0
-                drawdown = ((prices / prices.cummax()) - 1).min() * 100
+                    # Metrics
+                    years = (end_date - start_date).days / 365.25
+                    cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
+                    returns = prices.pct_change().dropna()
+                    sharpe = (returns.mean() * 252) / (np.std(returns, ddof=0) * np.sqrt(252)) if np.std(returns, ddof=0) != 0 else 0
+                    drawdown = ((prices / prices.cummax()) - 1).min() * 100
 
-                col1, col2 = st.columns([1.5, 1])
-                with col1:
-                    fig, ax = plt.subplots(figsize=(10, 5))
-                    ax.plot(dates, prices * (initial / prices.iloc[0]), label="Buy & Hold", color='gray', alpha=0.5)
-                    if strategy == "Dollar Cost Average (Monthly)":
-                        portfolio_value = []
-                        cum_invest = 0
-                        cum_shares = 0
-                        for i, date in enumerate(dates):
-                            if date in monthly_dates and cum_invest < initial:
-                                cum_shares += monthly_invest / prices.iloc[i]
-                                cum_invest += monthly_invest
-                            portfolio_value.append(cum_shares * prices.iloc[i])
-                        ax.plot(dates, portfolio_value, label="DCA", color='green', linewidth=2)
-                    ax.set_title(f"{back_ticker} Backtest: {strategy}")
-                    ax.set_ylabel("Portfolio Value ($)")
-                    ax.legend()
-                    ax.grid(alpha=0.3)
-                    st.pyplot(fig)
+                    col1, col2 = st.columns([1.5, 1])
+                    with col1:
+                        fig, ax = plt.subplots(figsize=(10, 5))
+                        ax.plot(dates, np.cumprod(1 + returns) * initial, label="Buy & Hold", color='gray', alpha=0.7)
+                        if strategy == "Dollar Cost Average (Monthly)":
+                            ax.plot(dates, portfolio_values, label="DCA", color='green', linewidth=2)
+                        ax.set_title(f"{back_ticker} Backtest: {strategy}")
+                        ax.set_ylabel("Portfolio Value ($)")
+                        ax.legend()
+                        ax.grid(alpha=0.3)
+                        st.pyplot(fig)
 
-                with col2:
-                    st.metric("Final Value", f"${final_value:,.2f}", f"{pnl:,.0f}")
-                    st.metric("CAGR", f"{cagr:.1f}%")
-                    st.metric("Sharpe Ratio", f"{sharpe:.2f}")
-                    st.metric("Max Drawdown", f"{drawdown:.1f}%")
+                    with col2:
+                        st.metric("Final Value", f"${final_value:,.2f}", f"{pnl:,.0f}")
+                        st.metric("CAGR", f"{cagr:.1f}%")
+                        st.metric("Sharpe Ratio", f"{sharpe:.2f}")
+                        st.metric("Max Drawdown", f"{drawdown:.1f}%")
 
-                    if st.button("Export Report"):
                         report = f"""
 # Backtest Report: {back_ticker}
 **Strategy**: {strategy}  
-**Period**: {start_date} → {end_date}  
+**Period**: {start_date} to {end_date}  
 **Initial**: ${initial:,.0f}  
 **Final Value**: ${final_value:,.2f}  
 **PnL**: ${pnl:,.0f}  
@@ -223,11 +232,11 @@ st.markdown("### My Watchlist")
 for t, p in portfolio.items():
     st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
 
-# === EXPORT + THEME ===
+# === EXPORT + THEME (DARK MODE FIXED) ===
 col1, col2 = st.columns([1, 3])
 with col1:
     if st.button("Export to PDF"):
-        st.info("Use browser print → Save as PDF")
+        st.info("Use browser print to Save as PDF")
 with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=1)
     if theme == "Dark":
@@ -240,9 +249,12 @@ with col2:
             .stButton > button { color: #ffffff !important; background-color: #2d2d2d !important; border: 1px solid #555 !important; }
             .stButton > button:hover { background-color: #3d3d3d !important; }
             [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
+            /* SELECTBOX — FULLY VISIBLE */
             .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
             .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
             .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
+            .stSelectbox [data-baseweb="select"] { color: #ffffff !important; }
+            .stSelectbox [data-baseweb="select"] * { color: #ffffff !important; }
             .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
             .stInfo { background-color: #0e3d6b !important; color: #ffffff !important; border: 1px solid #1e5d8b !important; }
             </style>
