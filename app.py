@@ -111,7 +111,7 @@ with tab1:
                 if pct > 5:
                     st.success("**STRONG BUY SIGNAL**")
 
-# ——— TAB 2: BACKTESTING ENGINE (FINAL) ———
+# ——— TAB 2: BACKTESTING ENGINE (FINAL FIXED) ———
 with tab2:
     st.markdown("### Backtest Any Strategy")
     back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
@@ -127,11 +127,7 @@ with tab2:
 
     if st.button("Run Backtest"):
         with st.spinner("Running backtest..."):
-            # Convert to Timestamp
-            start_ts = pd.Timestamp(start_date)
-            end_ts = pd.Timestamp(end_date)
-
-            data = yf.download(back_ticker, start=start_ts, end=end_ts)
+            data = yf.download(back_ticker, start=start_date, end=end_date)
             if data.empty or len(data) < 2:
                 st.error("Not enough data")
             else:
@@ -149,8 +145,8 @@ with tab2:
                         pnl = final_value - initial
 
                     elif strategy == "Dollar Cost Average (Monthly)":
-                        monthly_dates = pd.date_range(start=start_ts, end=end_ts, freq='MS')
-                        monthly_dates = monthly_dates[monthly_dates <= end_ts]
+                        monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
+                        monthly_dates = monthly_dates[monthly_dates <= end_date]
                         num_months = len(monthly_dates)
                         if num_months == 0:
                             st.error("No months in range")
@@ -175,15 +171,17 @@ with tab2:
                             pnl = final_value - initial
 
                     # Metrics
-                    years = (end_ts - start_ts).days / 365.25
+                    years = (end_date - start_date).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
-                    if len(returns) > 1:
+                    if len(returns) > 0 and returns.notnull().any():
                         mean_ret = returns.mean()
                         std_dev = returns.std(ddof=0)
                         sharpe = (mean_ret * 252) / (std_dev * np.sqrt(252)) if std_dev > 0 else 0
                         drawdown = ((prices / prices.cummax()) - 1).min() * 100
                     else:
+                        mean_ret = 0
+                        std_dev = 0
                         sharpe = 0
                         drawdown = 0
 
