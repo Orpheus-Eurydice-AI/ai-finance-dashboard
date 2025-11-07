@@ -111,7 +111,7 @@ with tab1:
                 if pct > 5:
                     st.success("**STRONG BUY SIGNAL**")
 
-# ——— TAB 2: BACKTESTING ENGINE (FIXED) ———
+# ——— TAB 2: BACKTESTING ENGINE (FINAL FIXED) ———
 with tab2:
     st.markdown("### Backtest Any Strategy")
     back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
@@ -173,12 +173,14 @@ with tab2:
                     years = (end_date - start_date).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
-                    if len(returns) > 1:
+                    if len(returns) > 0 and not returns.isnull().all():
                         mean_ret = returns.mean()
                         std_dev = returns.std(ddof=0)
-                        sharpe = (mean_ret * 252) / (std_dev * np.sqrt(252)) if std_dev != 0 else 0
+                        sharpe = (mean_ret * 252) / (std_dev * math.sqrt(252)) if std_dev > 0 else 0
                         drawdown = ((prices / prices.cummax()) - 1).min() * 100
                     else:
+                        mean_ret = 0
+                        std_dev = 0
                         sharpe = 0
                         drawdown = 0
 
@@ -257,31 +259,30 @@ with col2:
             .stButton > button:hover { background-color: #3d3d3d !important; }
             [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
 
-            /* SELECTBOX — FULLY VISIBLE */
-            .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
-            .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
-            .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
+            /* SELECTBOX — LIGHT BG + DARK TEXT FOR CONTRAST */
+            .stSelectbox > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; border: 1px solid #ddd !important; }
+            .stSelectbox > div > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
+            .stSelectbox [data-baseweb="select"] > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
 
-            /* DROPDOWN MENU — BOLD WHITE, FULL OPACITY */
+            /* DROPDOWN MENU — LIGHT BG + DARK TEXT + HIGH CONTRAST */
             [data-baseweb="menu"] { 
-                background-color: #1a1a1a !important; 
-                border: 1px solid #444 !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+                background-color: #f0f0f0 !important; 
+                border: 1px solid #ddd !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
             }
             [data-baseweb="menu"] div { 
-                color: #ffffff !important; 
-                background-color: #1a1a1a !important; 
-                font-weight: 700 !important;
+                color: #0e1117 !important; 
+                background-color: #f0f0f0 !important; 
+                font-weight: 500 !important;
                 padding: 10px 16px !important;
-                opacity: 1 !important;
             }
             [data-baseweb="menu"] div:hover { 
-                background-color: #2d2d2d !important; 
-                color: #ffffff !important; 
+                background-color: #e0e0e0 !important; 
+                color: #0e1117 !important; 
             }
             [data-baseweb="menu"] div[data-selected="true"] {
-                background-color: #3d3d3d !important;
-                color: #ffffff !important;
+                background-color: #d0d0d0 !important;
+                color: #0e1117 !important;
             }
 
             .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
