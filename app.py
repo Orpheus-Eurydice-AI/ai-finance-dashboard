@@ -98,7 +98,6 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                # NO ROCKET — CLEAN ALERT
                 st.markdown("**BULLISH ALERT!**")
 
                 for h in headlines[:3]:
@@ -176,7 +175,6 @@ with col2:
                 background-color: #1e1e1e !important; 
                 border: 1px solid #555 !important; 
             }
-            /* ALL BUTTONS — DARK + VISIBLE TEXT */
             .stButton > button { 
                 color: #ffffff !important; 
                 background-color: #2d2d2d !important; 
@@ -186,13 +184,11 @@ with col2:
             .stButton > button:hover { 
                 background-color: #3d3d3d !important; 
             }
-            /* FORM SUBMIT BUTTON (LOGIN) — DARK */
             [data-testid="stFormSubmitButton"] > button {
                 background-color: #2d2d2d !important;
                 color: #ffffff !important;
                 border: 1px solid #555 !important;
             }
-            /* SELECTBOX — FULLY VISIBLE */
             .stSelectbox > div > div { 
                 background-color: #1e1e1e !important; 
                 color: #ffffff !important; 
@@ -206,7 +202,6 @@ with col2:
                 background-color: #1e1e1e !important; 
                 color: #ffffff !important; 
             }
-            /* SUCCESS & INFO BANNERS */
             .stSuccess { 
                 background-color: #1a4d1a !important; 
                 color: #ffffff !important; 
