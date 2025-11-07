@@ -103,11 +103,26 @@ if st.button("Analyze"):
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
 
+                       # === P&L + RISK ===
             current = prices[-1]
             forecast = pred[-1]
             pct = (forecast - current) / current * 100
-            st.success(f"**AI Predicts {ticker}: ${forecast:.2f} (+{pct:.1f}%)**")
+            volatility = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100  # 30-day vol
 
+            st.markdown("### Portfolio Summary")
+            col_p1, col_p2, col_p3 = st.columns(3)
+            with col_p1:
+                st.metric("Current Price", f"${current:.2f}")
+            with col_p2:
+                st.metric("7-Day Forecast", f"${forecast:.2f}", f"{pct:+.1f}%")
+            with col_p3:
+                st.metric("30-Day Volatility", f"{volatility:.1f}%")
+
+            if pct > 5:
+                st.success("**STRONG BUY SIGNAL** 🚀")
+            elif pct < -5:
+                st.warning("**SELL SIGNAL** ⚠️")
+                
 # Watchlist
 st.markdown("### My Watchlist")
 for t in st.session_state.watchlist:
