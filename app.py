@@ -28,15 +28,37 @@ else:
         st.session_state.user = None
         st.rerun()
 
-# === WATCHLIST ===
-if "watchlist" not in st.session_state:
-    st.session_state.watchlist = ["NVDA", "AAPL"]
+# === PORTFOLIO P&L ===
+st.markdown("### Portfolio Overview")
+portfolio = {}
+total_invested = 0
+total_value = 0
 
-ticker = st.text_input("Enter Stock Ticker", "NVDA").upper().strip()
-if st.button("Add to Watchlist"):
-    if ticker and ticker not in st.session_state.watchlist:
-        st.session_state.watchlist.append(ticker)
-        st.success(f"{ticker} added!")
+for t in st.session_state.watchlist:
+    data = yf.Ticker(t).history(period="1d")
+    if not data.empty:
+        price = data['Close'].iloc[-1]
+        shares = st.session_state.get(f"shares_{t}", 0)
+        if shares == 0:
+            shares = st.number_input(f"Shares of {t}", min_value=0, value=10, key=f"input_{t}")
+            st.session_state[f"shares_{t}"] = shares
+        value = shares * price
+        portfolio[t] = {"price": price, "shares": shares, "value": value}
+        total_invested += shares * price  # Simplified
+        total_value += value
+
+col_a, col_b, col_c = st.columns(3)
+with col_a:
+    st.metric("Total Value", f"${total_value:,.2f}")
+with col_b:
+    st.metric("Total P&L", f"${total_value - total_invested:,.2f}", f"{((total_value/total_invested)-1)*100:+.1f}%" if total_invested else "N/A")
+with col_c:
+    st.metric("Assets", len(portfolio))
+
+# Watchlist with values
+st.markdown("### My Watchlist")
+for t, p in portfolio.items():
+    st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
 
 # === ANALYZE ===
 if st.button("Analyze"):
