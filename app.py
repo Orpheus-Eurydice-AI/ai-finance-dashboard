@@ -98,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="rocket")  # Valid emoji
+                st.toast("BULLISH ALERT!", icon="rocket")  # rocket = valid emoji
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -118,7 +118,7 @@ if st.button("Analyze"):
                 st.metric("30-Day Volatility", f"{volatility:.1f}%")
 
             if pct > 5:
-                st.success("**STRONG BUY SIGNAL** Rocket")
+                st.success("**STRONG BUY SIGNAL** rocket")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
@@ -161,11 +161,12 @@ with col2:
         st.markdown("""
             <style>
             .stApp { background-color: #0e1117; color: #ffffff !important; }
-            h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown { color: #ffffff !important; }
+            h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText { color: #ffffff !important; }
             .stMetric > div, .stMetric label { color: #ffffff !important; }
             .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #444 !important; }
             .stButton > button { color: #ffffff !important; background-color: #333 !important; border: 1px solid #555 !important; }
-            .stSelectbox > div > div { color: #ffffff !important; }
+            .stSelectbox > div > div { color: #ffffff !important; background-color: #1e1e1e !important; }
+            .stSelectbox > div > div > div { color: #ffffff !important; }
             </style>
             """, unsafe_allow_html=True)
 
