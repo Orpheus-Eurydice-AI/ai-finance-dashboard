@@ -111,7 +111,7 @@ with tab1:
                 if pct > 5:
                     st.success("**STRONG BUY SIGNAL**")
 
-# ——— TAB 2: BACKTESTING ENGINE (FIXED) ———
+# ——— TAB 2: BACKTESTING ENGINE (FINAL FIXED) ———
 with tab2:
     st.markdown("### Backtest Any Strategy")
     back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
@@ -161,10 +161,10 @@ with tab2:
                             cum_invest = 0
                             for date in dates:
                                 if date in monthly_dates and cum_invest < initial:
-                                    price = prices.loc[date]
+                                    price = prices.asof(date)
                                     cum_shares += monthly_invest / price
                                     cum_invest += monthly_invest
-                                portfolio_values.append(cum_shares * prices.loc[date])
+                                portfolio_values.append(cum_shares * prices.asof(date))
                             final_value = cum_shares * last_price
                             pnl = final_value - initial
 
@@ -172,7 +172,7 @@ with tab2:
                     years = (end_date - start_date).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
-                    sharpe = (returns.mean() * 252) / (np.std(returns, ddof=0) * np.sqrt(252)) if np.std(returns, ddof=0) != 0 else 0
+                    sharpe = (returns.mean() * 252) / (returns.std(ddof=0) * np.sqrt(252)) if returns.std(ddof=0) != 0 else 0
                     drawdown = ((prices / prices.cummax()) - 1).min() * 100
 
                     col1, col2 = st.columns([1.5, 1])
@@ -232,7 +232,7 @@ st.markdown("### My Watchlist")
 for t, p in portfolio.items():
     st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
 
-# === EXPORT + THEME (DARK MODE FIXED) ===
+# === EXPORT + THEME (FINAL DARK MODE) ===
 col1, col2 = st.columns([1, 3])
 with col1:
     if st.button("Export to PDF"):
@@ -241,46 +241,44 @@ with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=1)
     if theme == "Dark":
         st.markdown("""
-        <style>
-        .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
-        h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
-        .stMetric > div, .stMetric label, .stMetric > div > div { color: #ffffff !important; }
-        .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #555 !important; }
-        .stButton > button { color: #ffffff !important; background-color: #2d2d2d !important; border: 1px solid #555 !important; }
-        .stButton > button:hover { background-color: #3d3d3d !important; }
-        [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
+            <style>
+            .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
+            h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
+            .stMetric > div, .stMetric label, .stMetric > div > div { color: #ffffff !important; }
+            .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #555 !important; }
+            .stButton > button { color: #ffffff !important; background-color: #2d2d2d !important; border: 1px solid #555 !important; }
+            .stButton > button:hover { background-color: #3d3d3d !important; }
+            [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
 
-        /* SELECTBOX — FULLY VISIBLE + DROPDOWN MENU */
-        .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
-        .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
-        .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
-        .stSelectbox [data-baseweb="select"] { color: #ffffff !important; }
-        .stSelectbox [data-baseweb="select"] * { color: #ffffff !important; }
+            /* SELECTBOX — FULLY VISIBLE */
+            .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
+            .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
+            .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
 
-        /* DROPDOWN MENU — BOLD WHITE TEXT, DARK BG, HIGH CONTRAST */
-        [data-baseweb="menu"] { 
-            background-color: #1a1a1a !important; 
-            border: 1px solid #444 !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-        }
-        [data-baseweb="menu"] div { 
-            color: #ffffff !important; 
-            background-color: #1a1a1a !important; 
-            font-weight: 600 !important;
-            padding: 8px 12px !important;
-        }
-        [data-baseweb="menu"] div:hover { 
-            background-color: #2d2d2d !important; 
-            color: #ffffff !important; 
-        }
-        [data-baseweb="menu"] div[data-selected="true"] {
-            background-color: #3d3d3d !important;
-            color: #ffffff !important;
-        }
+            /* DROPDOWN MENU — BOLD WHITE TEXT, DARK BG, HIGH CONTRAST */
+            [data-baseweb="menu"] { 
+                background-color: #1a1a1a !important; 
+                border: 1px solid #444 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+            }
+            [data-baseweb="menu"] div { 
+                color: #ffffff !important; 
+                background-color: #1a1a1a !important; 
+                font-weight: 700 !important;
+                padding: 10px 14px !important;
+            }
+            [data-baseweb="menu"] div:hover { 
+                background-color: #2d2d2d !important; 
+                color: #ffffff !important; 
+            }
+            [data-baseweb="menu"] div[data-selected="true"] {
+                background-color: #3d3d3d !important;
+                color: #ffffff !important;
+            }
 
-        .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
-        .stInfo { background-color: #0e3d6b !important; color: #ffffff !important; border: 1px solid #1e5d8b !important; }
-        </style>
-        """, unsafe_allow_html=True)
+            .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
+            .stInfo { background-color: #0e3d6b !important; color: #ffffff !important; border: 1px solid #1e5d8b !important; }
+            </style>
+            """, unsafe_allow_html=True)
 
 st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
