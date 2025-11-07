@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import streamlit.components.v1 as components
@@ -111,7 +112,7 @@ with tab1:
                 if pct > 5:
                     st.success("**STRONG BUY SIGNAL**")
 
-# ——— TAB 2: BACKTESTING ENGINE (FINAL FIXED) ———
+# ——— TAB 2: BACKTESTING ENGINE (FINAL) ———
 with tab2:
     st.markdown("### Backtest Any Strategy")
     back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
@@ -162,8 +163,9 @@ with tab2:
                             for date in dates:
                                 if date in monthly_dates and cum_invest < initial:
                                     price = prices.asof(date)
-                                    cum_shares += monthly_invest / price
-                                    cum_invest += monthly_invest
+                                    if pd.notna(price):
+                                        cum_shares += monthly_invest / price
+                                        cum_invest += monthly_invest
                                 portfolio_values.append(cum_shares * prices.asof(date))
                             final_value = cum_shares * last_price
                             pnl = final_value - initial
@@ -172,7 +174,8 @@ with tab2:
                     years = (end_date - start_date).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
-                    sharpe = (returns.mean() * 252) / (returns.std(ddof=0) * np.sqrt(252)) if returns.std(ddof=0) != 0 else 0
+                    std_dev = returns.std(ddof=0)
+                    sharpe = (returns.mean() * 252) / (std_dev * math.sqrt(252)) if std_dev != 0 else 0
                     drawdown = ((prices / prices.cummax()) - 1).min() * 100
 
                     col1, col2 = st.columns([1.5, 1])
@@ -232,7 +235,7 @@ st.markdown("### My Watchlist")
 for t, p in portfolio.items():
     st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
 
-# === EXPORT + THEME (FINAL DARK MODE) ===
+# === EXPORT + THEME (FINAL) ===
 col1, col2 = st.columns([1, 3])
 with col1:
     if st.button("Export to PDF"):
@@ -255,17 +258,18 @@ with col2:
             .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
             .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
 
-            /* DROPDOWN MENU — BOLD WHITE TEXT, DARK BG, HIGH CONTRAST */
+            /* DROPDOWN MENU — BOLD WHITE, FULL OPACITY */
             [data-baseweb="menu"] { 
                 background-color: #1a1a1a !important; 
-                border: 1px solid #444 !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+                border: 1px solid #555 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.7) !important;
             }
             [data-baseweb="menu"] div { 
                 color: #ffffff !important; 
                 background-color: #1a1a1a !important; 
                 font-weight: 700 !important;
-                padding: 10px 14px !important;
+                padding: 10px 16px !important;
+                opacity: 1 !important;
             }
             [data-baseweb="menu"] div:hover { 
                 background-color: #2d2d2d !important; 
