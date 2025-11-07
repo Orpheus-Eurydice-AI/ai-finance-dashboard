@@ -75,12 +75,11 @@ if st.button("Analyze"):
                 st.markdown("### News Sentiment")
                 st.success("**BULLISH** (5/5)")
 
-                # BALLOONS (no emoji in JS)
                 components.html("""
                     <script>
                     for(let i=0; i<50; i++){
                         let b = document.createElement('div');
-                        b.innerText = '🎈';
+                        b.innerText = 'Balloon';
                         b.style.position = 'fixed';
                         b.style.left = Math.random()*100 + 'vw';
                         b.style.bottom = '-10vh';
@@ -98,7 +97,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="🎉")  # Valid emoji
+                st.toast("BULLISH ALERT!", icon="Party")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -118,7 +117,7 @@ if st.button("Analyze"):
                 st.metric("30-Day Volatility", f"{volatility:.1f}%")
 
             if pct > 5:
-                st.success("**STRONG BUY SIGNAL** 🚀")
+                st.success("**STRONG BUY SIGNAL** Rocket")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
@@ -152,7 +151,7 @@ for t, p in portfolio.items():
 # === EXPORT + THEME ===
 col1, col2 = st.columns([1, 3])
 with col1:
-    if st.button("📄 Export to PDF"):
+    if st.button("Export to PDF"):
         st.info("Use browser print → Save as PDF")
 
 with col2:
@@ -160,9 +159,11 @@ with col2:
     if theme == "Dark":
         st.markdown("""
             <style>
-            .stApp { background-color: #0e1117; color: white; }
-            .stMetric > div { color: white !important; }
-            h1, h2, h3, h4 { color: white; }
+            .stApp { background-color: #0e1117; color: #ffffff !important; }
+            h1, h2, h3, h4, h5, h6, p, div, span, label { color: #ffffff !important; }
+            .stMetric > div { color: #ffffff !important; }
+            .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; }
+            .stButton > button { color: #ffffff !important; }
             </style>
             """, unsafe_allow_html=True)
 
