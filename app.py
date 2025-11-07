@@ -111,7 +111,7 @@ with tab1:
                 if pct > 5:
                     st.success("**STRONG BUY SIGNAL**")
 
-# ——— TAB 2: BACKTESTING ENGINE (FINAL FIXED) ———
+# ——— TAB 2: BACKTESTING ENGINE (FINAL) ———
 with tab2:
     st.markdown("### Backtest Any Strategy")
     back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
@@ -127,7 +127,11 @@ with tab2:
 
     if st.button("Run Backtest"):
         with st.spinner("Running backtest..."):
-            data = yf.download(back_ticker, start=start_date, end=end_date)
+            # Convert to Timestamp
+            start_ts = pd.Timestamp(start_date)
+            end_ts = pd.Timestamp(end_date)
+
+            data = yf.download(back_ticker, start=start_ts, end=end_ts)
             if data.empty or len(data) < 2:
                 st.error("Not enough data")
             else:
@@ -145,8 +149,8 @@ with tab2:
                         pnl = final_value - initial
 
                     elif strategy == "Dollar Cost Average (Monthly)":
-                        monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
-                        monthly_dates = monthly_dates[monthly_dates <= end_date]
+                        monthly_dates = pd.date_range(start=start_ts, end=end_ts, freq='MS')
+                        monthly_dates = monthly_dates[monthly_dates <= end_ts]
                         num_months = len(monthly_dates)
                         if num_months == 0:
                             st.error("No months in range")
@@ -171,17 +175,15 @@ with tab2:
                             pnl = final_value - initial
 
                     # Metrics
-                    years = (end_date - start_date).days / 365.25
+                    years = (end_ts - start_ts).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
-                    if len(returns) > 0:
+                    if len(returns) > 1:
                         mean_ret = returns.mean()
                         std_dev = returns.std(ddof=0)
                         sharpe = (mean_ret * 252) / (std_dev * np.sqrt(252)) if std_dev > 0 else 0
                         drawdown = ((prices / prices.cummax()) - 1).min() * 100
                     else:
-                        mean_ret = 0
-                        std_dev = 0
                         sharpe = 0
                         drawdown = 0
 
@@ -260,12 +262,12 @@ with col2:
             .stButton > button:hover { background-color: #3d3d3d !important; }
             [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
 
-            /* SELECTBOX — LIGHT BG + DARK TEXT FOR CONTRAST */
+            /* SELECTBOX — LIGHT BG + DARK TEXT */
             .stSelectbox > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; border: 1px solid #ddd !important; }
             .stSelectbox > div > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
             .stSelectbox [data-baseweb="select"] > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
 
-            /* DROPDOWN MENU — DARK TEXT on LIGHT BG + HIGH CONTRAST */
+            /* DROPDOWN MENU — DARK TEXT on LIGHT BG */
             [data-baseweb="menu"] { 
                 background-color: #f0f0f0 !important; 
                 border: 1px solid #ddd !important;
