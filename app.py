@@ -2,7 +2,6 @@ import streamlit as st
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import streamlit.components.v1 as components
@@ -166,7 +165,10 @@ with tab2:
                                     if pd.notna(price):
                                         cum_shares += monthly_invest / price
                                         cum_invest += monthly_invest
-                                portfolio_values.append(cum_shares * prices.asof(date))
+                                if pd.notna(prices.asof(date)):
+                                    portfolio_values.append(cum_shares * prices.asof(date))
+                                else:
+                                    portfolio_values.append(0)
                             final_value = cum_shares * last_price
                             pnl = final_value - initial
 
@@ -174,8 +176,9 @@ with tab2:
                     years = (end_date - start_date).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
+                    mean_ret = returns.mean()
                     std_dev = returns.std(ddof=0)
-                    sharpe = (returns.mean() * 252) / (std_dev * math.sqrt(252)) if std_dev != 0 else 0
+                    sharpe = (mean_ret * 252) / (std_dev * math.sqrt(252)) if std_dev != 0 else 0
                     drawdown = ((prices / prices.cummax()) - 1).min() * 100
 
                     col1, col2 = st.columns([1.5, 1])
@@ -235,7 +238,7 @@ st.markdown("### My Watchlist")
 for t, p in portfolio.items():
     st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
 
-# === EXPORT + THEME (FINAL) ===
+# === EXPORT + THEME ===
 col1, col2 = st.columns([1, 3])
 with col1:
     if st.button("Export to PDF"):
@@ -253,31 +256,30 @@ with col2:
             .stButton > button:hover { background-color: #3d3d3d !important; }
             [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
 
-            /* SELECTBOX — FULLY VISIBLE */
-            .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
-            .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
-            .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
+            /* SELECTBOX — LIGHT BG + DARK TEXT FOR CONTRAST */
+            .stSelectbox > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; border: 1px solid #ddd !important; }
+            .stSelectbox > div > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
+            .stSelectbox [data-baseweb="select"] > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
 
-            /* DROPDOWN MENU — BOLD WHITE, FULL OPACITY */
+            /* DROPDOWN MENU — LIGHT BG + DARK TEXT + HIGH CONTRAST */
             [data-baseweb="menu"] { 
-                background-color: #1a1a1a !important; 
-                border: 1px solid #555 !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.7) !important;
+                background-color: #f0f0f0 !important; 
+                border: 1px solid #ddd !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
             }
             [data-baseweb="menu"] div { 
-                color: #ffffff !important; 
-                background-color: #1a1a1a !important; 
-                font-weight: 700 !important;
+                color: #0e1117 !important; 
+                background-color: #f0f0f0 !important; 
+                font-weight: 500 !important;
                 padding: 10px 16px !important;
-                opacity: 1 !important;
             }
             [data-baseweb="menu"] div:hover { 
-                background-color: #2d2d2d !important; 
-                color: #ffffff !important; 
+                background-color: #e0e0e0 !important; 
+                color: #0e1117 !important; 
             }
             [data-baseweb="menu"] div[data-selected="true"] {
-                background-color: #3d3d3d !important;
-                color: #ffffff !important;
+                background-color: #d0d0d0 !important;
+                color: #0e1117 !important;
             }
 
             .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
