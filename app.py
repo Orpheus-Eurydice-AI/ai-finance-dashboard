@@ -5,11 +5,10 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 import streamlit.components.v1 as components
-from datetime import datetime
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
-st.markdown("*Real-time + 7-day AI forecast + News + Watchlist + **Backtesting***")
+st.markdown("*Real-time stock analysis + 7-day AI forecast + News Sentiment + Watchlist*")
 
 # === LOGIN ===
 if "user" not in st.session_state:
@@ -39,187 +38,99 @@ if st.button("Add to Watchlist"):
         st.session_state.watchlist.append(ticker)
         st.success(f"{ticker} added!")
 
-# === TABS ===
-tab1, tab2 = st.tabs(["Live Analysis", "Backtesting"])
+# === ANALYZE ===
+if st.button("Analyze"):
+    with st.spinner("Fetching data..."):
+        data = yf.Ticker(ticker).history(period="3mo")
+        if data.empty or len(data) < 7:
+            st.error("Invalid ticker or insufficient data. Try **NVDA**, **AAPL**, or **TSLA**.")
+        else:
+            prices = data['Close'].values
+            days = np.arange(len(prices)).reshape(-1, 1)
+            model = LinearRegression()
+            model.fit(days, prices)
+            future = np.arange(len(prices), len(prices)+7).reshape(-1, 1)
+            pred = model.predict(future)
+            future_dates = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), periods=7)
 
-# ——— TAB 1: LIVE ANALYSIS ———
-with tab1:
-    if st.button("Analyze"):
-        with st.spinner("Fetching..."):
-            data = yf.Ticker(ticker).history(period="3mo")
-            if data.empty:
-                st.error("Invalid ticker")
+            fig, ax = plt.subplots(figsize=(12, 6))
+            ax.plot(data.index, prices, label="Actual Price", color='blue')
+            ax.plot(future_dates, pred, label="AI 7-Day Forecast", color='red', linestyle='--')
+            ax.set_title(f"{ticker} Stock Price + AI Forecast")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Price ($)")
+            ax.legend()
+            ax.grid(True)
+            st.pyplot(fig)
+
+            current = prices[-1]
+            forecast = pred[-1]
+            change = forecast - current
+            pct = (change / current) * 100 if current != 0 else 0
+            volatility = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100 if len(prices) > 30 else 0
+
+            st.markdown("### Forecast Summary")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Current Price", f"${current:.2f}")
+            with col2:
+                st.metric("7-Day Forecast", f"${forecast:.2f}", f"{pct:+.1f}%")
+            with col3:
+                st.metric("30-Day Volatility", f"{volatility:.1f}%")
+
+            # News Sentiment (Mock)
+            headlines = [
+                f"{ticker} surges on strong earnings",
+                f"Analysts raise price target for {ticker}",
+                f"Market volatility impacts {ticker}",
+                f"{ticker} beats revenue expectations",
+                f"Investors cautious on {ticker} outlook"
+            ]
+            sentiments = [TextBlob(h).sentiment.polarity for h in headlines]
+            avg_sentiment = np.mean(sentiments)
+            positive_count = sum(1 for s in sentiments if s > 0.1)
+
+            st.markdown("### News Sentiment")
+            if avg_sentiment > 0.1:
+                st.success(f"Bullish ({positive_count}/5)")
+                # Balloons
+                components.html("""
+                    <script>
+                    for(let i=0; i<50; i++){
+                        let b = document.createElement('div');
+                        b.innerText = 'Balloon';
+                        b.style.position = 'fixed';
+                        b.style.left = Math.random()*100 + 'vw';
+                        b.style.bottom = '-10vh';
+                        b.style.fontSize = '36px';
+                        b.style.zIndex = '9999';
+                        b.style.animation = 'float 2.5s ease-in-out forwards';
+                        document.body.appendChild(b);
+                        setTimeout(() => b.remove(), 2500);
+                    }
+                    </script>
+                    <style>
+                    @keyframes float {
+                        to { transform: translateY(-150vh) rotate(360deg); opacity: 0; }
+                    }
+                    </style>
+                """, height=0, width=0)
+            elif avg_sentiment < -0.1:
+                st.warning(f"Bearish ({positive_count}/5)")
             else:
-                prices = data['Close'].values
-                days = np.arange(len(prices)).reshape(-1, 1)
-                model = LinearRegression()
-                model.fit(days, prices)
-                future = np.arange(len(prices), len(prices)+7).reshape(-1, 1)
-                pred = model.predict(future)
-                future_dates = pd.date_range(start=data.index[-1] + pd.Timedelta(days=1), periods=7)
+                st.info(f"Neutral ({positive_count}/5)")
 
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    fig, ax = plt.subplots(figsize=(10, 5))
-                    ax.plot(data.index, prices, label="Actual", color='#1f77b4', linewidth=2.5)
-                    ax.plot(future_dates, pred, label="AI 7-Day", color='red', linestyle='--', linewidth=3)
-                    ax.set_title(f"{ticker} + AI Prediction")
-                    ax.legend()
-                    ax.grid(alpha=0.3)
-                    st.pyplot(fig)
+            for h in headlines[:3]:
+                st.markdown(f"• {h}")
 
-                with col2:
-                    st.markdown("### News Sentiment")
-                    st.success("**BULLISH** (5/5)")
-                    components.html("""
-                        <script>
-                        for(let i=0; i<50; i++){
-                            let b = document.createElement('div');
-                            b.innerText = 'Balloon';
-                            b.style.position = 'fixed';
-                            b.style.left = Math.random()*100 + 'vw';
-                            b.style.bottom = '-10vh';
-                            b.style.fontSize = '36px';
-                            b.style.zIndex = '9999';
-                            b.style.animation = 'float 2.5s ease-in-out forwards';
-                            document.body.appendChild(b);
-                            setTimeout(() => b.remove(), 2500);
-                        }
-                        </script>
-                        <style>
-                        @keyframes float {
-                            to { transform: translateY(-150vh) rotate(360deg); opacity: 0; }
-                        }
-                        </style>
-                    """, height=0, width=0)
-                    st.markdown("**BULLISH ALERT!**")
+            if pct > 5:
+                st.success("STRONG BUY SIGNAL")
 
-                current = prices[-1]
-                forecast = pred[-1]
-                pct = (forecast - current) / current * 100
-                volatility = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100
-
-                st.markdown("### Portfolio Summary")
-                col_p1, col_p2, col_p3 = st.columns(3)
-                with col_p1:
-                    st.metric("Current Price", f"${current:.2f}")
-                with col_p2:
-                    st.metric("7-Day Forecast", f"${forecast:.2f}", f"{pct:+.1f}%")
-                with col_p3:
-                    st.metric("30-Day Volatility", f"{volatility:.1f}%")
-
-                if pct > 5:
-                    st.success("**STRONG BUY SIGNAL**")
-
-# ——— TAB 2: BACKTESTING ENGINE (FINAL FIXED) ———
-with tab2:
-    st.markdown("### Backtest Any Strategy")
-    back_ticker = st.selectbox("Select Ticker", st.session_state.watchlist, key="back_ticker")
-    col_start, col_end = st.columns(2)
-    with col_start:
-        start_date = st.date_input("Start Date", value=datetime(2020, 1, 1))
-    with col_end:
-        end_date = st.date_input("End Date", value=datetime.today())
-
-    strategy = st.selectbox("Strategy", ["Buy & Hold", "Dollar Cost Average (Monthly)"])
-
-    initial = st.number_input("Initial Investment ($)", value=10000, min_value=100)
-
-    if st.button("Run Backtest"):
-        with st.spinner("Running backtest..."):
-            data = yf.download(back_ticker, start=start_date, end=end_date)
-            if data.empty or len(data) < 2:
-                st.error("Not enough data")
-            else:
-                prices = data['Close'].dropna()
-                if len(prices) == 0:
-                    st.error("No price data")
-                else:
-                    first_price = prices.iloc[0]
-                    last_price = prices.iloc[-1]
-                    dates = prices.index
-
-                    if strategy == "Buy & Hold":
-                        shares = initial / first_price
-                        final_value = shares * last_price
-                        pnl = final_value - initial
-
-                    elif strategy == "Dollar Cost Average (Monthly)":
-                        monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
-                        monthly_dates = monthly_dates[monthly_dates <= end_date]
-                        num_months = len(monthly_dates)
-                        if num_months == 0:
-                            st.error("No months in range")
-                            final_value = initial
-                            pnl = 0
-                        else:
-                            monthly_invest = initial / num_months
-                            shares = 0
-                            investment = 0
-                            portfolio_values = []
-                            cum_shares = 0
-                            cum_invest = 0
-                            for date in dates:
-                                if date in monthly_dates and cum_invest < initial:
-                                    price = prices.asof(date)
-                                    if pd.notna(price):
-                                        cum_shares += monthly_invest / price
-                                        cum_invest += monthly_invest
-                                portfolio_values.append(cum_shares * prices.asof(date))
-                            final_value = cum_shares * last_price
-                            pnl = final_value - initial
-
-                    # Metrics
-                    years = (end_date - start_date).days / 365.25
-                    cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
-                    returns = prices.pct_change().dropna()
-                    if len(returns) > 0:
-                        mean_ret = returns.mean()
-                        std_dev = returns.std(ddof=0)
-                        if std_dev > 0:
-                            sharpe = (mean_ret * 252) / (std_dev * math.sqrt(252))
-                        else:
-                            sharpe = 0
-                        drawdown = ((prices / prices.cummax()) - 1).min() * 100
-                    else:
-                        sharpe = 0
-                        drawdown = 0
-
-                    col1, col2 = st.columns([1.5, 1])
-                    with col1:
-                        fig, ax = plt.subplots(figsize=(10, 5))
-                        ax.plot(dates, np.cumprod(1 + returns) * initial, label="Buy & Hold", color='gray', alpha=0.7)
-                        if strategy == "Dollar Cost Average (Monthly)":
-                            ax.plot(dates, portfolio_values, label="DCA", color='green', linewidth=2)
-                        ax.set_title(f"{back_ticker} Backtest: {strategy}")
-                        ax.set_ylabel("Portfolio Value ($)")
-                        ax.legend()
-                        ax.grid(alpha=0.3)
-                        st.pyplot(fig)
-
-                    with col2:
-                        st.metric("Final Value", f"${final_value:,.2f}", f"{pnl:,.0f}")
-                        st.metric("CAGR", f"{cagr:.1f}%")
-                        st.metric("Sharpe Ratio", f"{sharpe:.2f}")
-                        st.metric("Max Drawdown", f"{drawdown:.1f}%")
-
-                        report = f"""
-# Backtest Report: {back_ticker}
-**Strategy**: {strategy}  
-**Period**: {start_date} to {end_date}  
-**Initial**: ${initial:,.0f}  
-**Final Value**: ${final_value:,.2f}  
-**PnL**: ${pnl:,.0f}  
-**CAGR**: {cagr:.1f}%  
-**Sharpe**: {sharpe:.2f}  
-**Max Drawdown**: {drawdown:.1f}%
-                        """
-                        st.download_button("Download Report", report, f"backtest_{back_ticker}.txt")
-
-# === PORTFOLIO ===
+# === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
 portfolio = {}
 total_value = 0
+
 for t in st.session_state.watchlist:
     data = yf.Ticker(t).history(period="1d")
     if not data.empty:
@@ -257,7 +168,7 @@ with col2:
             .stMetric > div, .stMetric label, .stMetric > div > div { color: #ffffff !important; }
             .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #555 !important; }
             .stButton > button { color: #ffffff !important; background-color: #2d2d2d !important; border: 1px solid #555 !important; }
-            .stButton > button:hover { background-color: #3d3d3d !important; }
+            .stButton > button:hover { background-color: #3d3d2d !important; }
             [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
 
             /* SELECTBOX — LIGHT BG + DARK TEXT */
