@@ -74,38 +74,48 @@ if st.button("Analyze"):
                 ax.grid(alpha=0.3)
                 st.pyplot(fig)
 
-                       with col2:
+            with col2:
                 st.markdown("### News Sentiment")
-                # DEMO: FORCE BULLISH + BALLOONS
-                st.success("**BULLISH** (5/5) 🎈")
-                st.toast("BULLISH ALERT! 🎉", icon="🎉")
-                st.markdown("""
-                    <script>
-                    const balloons = () => {
-                        for(let i=0; i<40; i++){
-                            const b = document.createElement('div');
-                            b.innerText = '🎈';
-                            b.style.position = 'fixed';
-                            b.style.left = Math.random()*100 + 'vw';
-                            b.style.bottom = '-10vh';
-                            b.style.fontSize = '34px';
-                            b.style.zIndex = '9999';
-                            b.style.animation = 'float 3s ease-in-out forwards';
-                            document.body.appendChild(b);
-                            setTimeout(() => b.remove(), 3000);
+                if avg_sentiment > 0.1:
+                    st.success(f"**BULLISH** ({positive_count}/5) 🎈")
+                    st.toast("BULLISH ALERT! 🎉", icon="🎉")
+                    st.markdown("""
+                        <script>
+                        const balloons = () => {
+                            for(let i=0; i<40; i++){
+                                const b = document.createElement('div');
+                                b.innerText = '🎈';
+                                b.style.position = 'fixed';
+                                b.style.left = Math.random()*100 + 'vw';
+                                b.style.bottom = '-10vh';
+                                b.style.fontSize = '34px';
+                                b.style.zIndex = '9999';
+                                b.style.animation = 'float 3s ease-in-out forwards';
+                                document.body.appendChild(b);
+                                setTimeout(() => b.remove(), 3000);
+                            }
+                        };
+                        balloons();
+                        </script>
+                        <style>
+                        @keyframes float {
+                            to { transform: translateY(-140vh) rotate(360deg); opacity: 0; }
                         }
-                    };
-                    balloons();
-                    </script>
-                    <style>
-                    @keyframes float {
-                        to { transform: translateY(-140vh) rotate(360deg); opacity: 0; }
-                    }
-                    </style>
-                """, unsafe_allow_html=True)
+                        </style>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.info(f"**Neutral** ({positive_count}/5)")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
+
+            current = prices[-1]
+            forecast = pred[-1]
+            pct = (forecast - current) / current * 100
+            if pct > 0:
+                st.success(f"**AI Predicts {ticker}: ${forecast:.2f} (+{pct:.1f}%)**")
+            else:
+                st.warning(f"**AI Predicts {ticker}: ${forecast:.2f} ({pct:.1f}%)**")
 
 # Watchlist
 st.markdown("### My Watchlist")
