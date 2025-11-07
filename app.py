@@ -28,37 +28,15 @@ else:
         st.session_state.user = None
         st.rerun()
 
-# === PORTFOLIO P&L ===
-st.markdown("### Portfolio Overview")
-portfolio = {}
-total_invested = 0
-total_value = 0
+# === WATCHLIST ===
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = ["NVDA", "AAPL"]
 
-for t in st.session_state.watchlist:
-    data = yf.Ticker(t).history(period="1d")
-    if not data.empty:
-        price = data['Close'].iloc[-1]
-        shares = st.session_state.get(f"shares_{t}", 0)
-        if shares == 0:
-            shares = st.number_input(f"Shares of {t}", min_value=0, value=10, key=f"input_{t}")
-            st.session_state[f"shares_{t}"] = shares
-        value = shares * price
-        portfolio[t] = {"price": price, "shares": shares, "value": value}
-        total_invested += shares * price  # Simplified
-        total_value += value
-
-col_a, col_b, col_c = st.columns(3)
-with col_a:
-    st.metric("Total Value", f"${total_value:,.2f}")
-with col_b:
-    st.metric("Total P&L", f"${total_value - total_invested:,.2f}", f"{((total_value/total_invested)-1)*100:+.1f}%" if total_invested else "N/A")
-with col_c:
-    st.metric("Assets", len(portfolio))
-
-# Watchlist with values
-st.markdown("### My Watchlist")
-for t, p in portfolio.items():
-    st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
+ticker = st.text_input("Enter Stock Ticker", "NVDA").upper().strip()
+if st.button("Add to Watchlist"):
+    if ticker and ticker not in st.session_state.watchlist:
+        st.session_state.watchlist.append(ticker)
+        st.success(f"{ticker} added!")
 
 # === ANALYZE ===
 if st.button("Analyze"):
@@ -97,12 +75,11 @@ if st.button("Analyze"):
                 st.markdown("### News Sentiment")
                 st.success("**BULLISH** (5/5)")
 
-                # UNBLOCKABLE BALLOONS
                 components.html("""
                     <script>
                     for(let i=0; i<50; i++){
                         let b = document.createElement('div');
-                        b.innerText = '🎈';
+                        b.innerText = 'Balloon';
                         b.style.position = 'fixed';
                         b.style.left = Math.random()*100 + 'vw';
                         b.style.bottom = '-10vh';
@@ -120,16 +97,15 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="🎉")
+                st.toast("BULLISH ALERT!", icon="Party")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
 
-                       # === P&L + RISK ===
             current = prices[-1]
             forecast = pred[-1]
             pct = (forecast - current) / current * 100
-            volatility = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100  # 30-day vol
+            volatility = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100
 
             st.markdown("### Portfolio Summary")
             col_p1, col_p2, col_p3 = st.columns(3)
@@ -141,20 +117,42 @@ if st.button("Analyze"):
                 st.metric("30-Day Volatility", f"{volatility:.1f}%")
 
             if pct > 5:
-                st.success("**STRONG BUY SIGNAL** 🚀")
-            elif pct < -5:
-                st.warning("**SELL SIGNAL** ⚠️")
-                
-# Watchlist
-st.markdown("### My Watchlist")
+                st.success("**STRONG BUY SIGNAL** Rocket")
+
+# === PORTFOLIO P&L ===
+st.markdown("### Portfolio Overview")
+portfolio = {}
+total_value = 0
+
 for t in st.session_state.watchlist:
-    st.write(f"• {t}")
+    data = yf.Ticker(t).history(period="1d")
+    if not data.empty:
+        price = data['Close'].iloc[-1]
+        shares = st.session_state.get(f"shares_{t}", 0)
+        if shares == 0:
+            shares = st.number_input(f"Shares of {t}", min_value=0, value=10, key=f"input_{t}")
+            st.session_state[f"shares_{t}"] = shares
+        value = shares * price
+        portfolio[t] = {"price": price, "shares": shares, "value": value}
+        total_value += value
+
+col_a, col_b, col_c = st.columns(3)
+with col_a:
+    st.metric("Total Value", f"${total_value:,.2f}")
+with col_b:
+    st.metric("Assets", len(portfolio))
+with col_c:
+    st.metric("Watchlist", len(st.session_state.watchlist))
+
+st.markdown("### My Watchlist")
+for t, p in portfolio.items():
+    st.write(f"• **{t}**: {p['shares']} × ${p['price']:.2f} = **${p['value']:.2f}**")
 
 # === EXPORT + THEME ===
 col1, col2 = st.columns([1, 3])
 with col1:
-    if st.button("📄 Export to PDF"):
-        st.success("PDF export ready! (Use browser print → Save as PDF)")
+    if st.button("PDF Export"):
+        st.success("Use browser print → Save as PDF")
 
 with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=0)
