@@ -129,10 +129,9 @@ for t in st.session_state.watchlist:
     data = yf.Ticker(t).history(period="1d")
     if not data.empty:
         price = data['Close'].iloc[-1]
-        shares = st.session_state.get(f"shares_{t}", 0)
-        if shares == 0:
-            shares = st.number_input(f"Shares of {t}", min_value=0, value=10, key=f"input_{t}")
-            st.session_state[f"shares_{t}"] = shares
+        # Always show input, prefilled with current or default 10
+        shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
+        st.session_state[f"shares_{t}"] = shares  # Save on change
         value = shares * price
         portfolio[t] = {"price": price, "shares": shares, "value": value}
         total_value += value
