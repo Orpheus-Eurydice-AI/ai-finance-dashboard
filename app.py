@@ -98,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="🚀")  # rocket = CORRECT EMOJI
+                st.toast("BULLISH ALERT!", icon="rocket")  # rocket emoji
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -160,13 +160,33 @@ with col2:
     if theme == "Dark":
         st.markdown("""
             <style>
-            .stApp { background-color: #0e1117; color: #ffffff !important; }
+            .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
             h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
             .stMetric > div, .stMetric label { color: #ffffff !important; }
-            .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #444 !important; }
-            .stButton > button { color: #ffffff !important; background-color: #333 !important; border: 1px solid #555 !important; }
-            .stSelectbox > div > div { color: #ffffff !important; background-color: #1e1e1e !important; }
-            .stSelectbox > div > div > div { color: #ffffff !important; }
+            .stTextInput > div > div > input { 
+                color: #ffffff !important; 
+                background-color: #1e1e1e !important; 
+                border: 1px solid #555 !important; 
+            }
+            .stButton > button { 
+                color: #ffffff !important; 
+                background-color: #2d2d2d !important; 
+                border: 1px solid #555 !important; 
+            }
+            .stSelectbox > div > div { 
+                background-color: #1e1e1e !important; 
+                color: #ffffff !important; 
+            }
+            .stSelectbox > div > div > div { 
+                background-color: #1e1e1e !important; 
+                color: #ffffff !important; 
+            }
+            .stSelectbox > div > div > div > div { 
+                background-color: #1e1e1e !important; 
+                color: #ffffff !important; 
+            }
+            .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; }
+            .stInfo { background-color: #0e3d6b !important; color: #ffffff !important; }
             </style>
             """, unsafe_allow_html=True)
 
