@@ -98,7 +98,8 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.markdown("**BULLISH ALERT! rocket**")
+                # NO ROCKET — CLEAN ALERT
+                st.markdown("**BULLISH ALERT!**")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -118,7 +119,7 @@ if st.button("Analyze"):
                 st.metric("30-Day Volatility", f"{volatility:.1f}%")
 
             if pct > 5:
-                st.success("**STRONG BUY SIGNAL** rocket")
+                st.success("**STRONG BUY SIGNAL**")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
@@ -175,7 +176,7 @@ with col2:
                 background-color: #1e1e1e !important; 
                 border: 1px solid #555 !important; 
             }
-            /* ALL BUTTONS — VISIBLE */
+            /* ALL BUTTONS — DARK + VISIBLE TEXT */
             .stButton > button { 
                 color: #ffffff !important; 
                 background-color: #2d2d2d !important; 
@@ -184,6 +185,12 @@ with col2:
             }
             .stButton > button:hover { 
                 background-color: #3d3d3d !important; 
+            }
+            /* FORM SUBMIT BUTTON (LOGIN) — DARK */
+            [data-testid="stFormSubmitButton"] > button {
+                background-color: #2d2d2d !important;
+                color: #ffffff !important;
+                border: 1px solid #555 !important;
             }
             /* SELECTBOX — FULLY VISIBLE */
             .stSelectbox > div > div { 
@@ -209,12 +216,6 @@ with col2:
                 background-color: #0e3d6b !important; 
                 color: #ffffff !important; 
                 border: 1px solid #1e5d8b !important;
-            }
-            /* FORM BUTTONS (LOGIN) */
-            form button { 
-                background-color: #2d2d2d !important; 
-                color: #ffffff !important; 
-                border: 1px solid #555 !important; 
             }
             </style>
             """, unsafe_allow_html=True)
