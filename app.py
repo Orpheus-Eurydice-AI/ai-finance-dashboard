@@ -75,7 +75,7 @@ if st.button("Analyze"):
                 st.markdown("### News Sentiment")
                 st.success("**BULLISH** (5/5)")
 
-                # UNBLOCKABLE BALLOONS + TOAST
+                # UNBLOCKABLE BALLOONS
                 components.html("""
                     <script>
                     for(let i=0; i<50; i++){
@@ -98,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="🎉")  # Valid emoji
+                st.toast("BULLISH ALERT!", icon="🎉")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -106,4 +106,11 @@ if st.button("Analyze"):
             current = prices[-1]
             forecast = pred[-1]
             pct = (forecast - current) / current * 100
-            st.success(f"**…
+            st.success(f"**AI Predicts {ticker}: ${forecast:.2f} (+{pct:.1f}%)**")
+
+# Watchlist
+st.markdown("### My Watchlist")
+for t in st.session_state.watchlist:
+    st.write(f"• {t}")
+
+st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
