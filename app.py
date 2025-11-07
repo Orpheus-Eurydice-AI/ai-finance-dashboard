@@ -98,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="rocket")  # rocket = CORRECT
+                st.toast("BULLISH ALERT!", icon="rocket")  # rocket = VALID EMOJI
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
