@@ -140,13 +140,13 @@ with tab2:
                     pnl = final_value - initial
 
                 elif strategy == "Dollar Cost Average (Monthly)":
-                    monthly_invest = initial / 60  # 5 years
+                    monthly_invest = initial / len(pd.date_range(start=start_date, end=end_date, freq='MS'))
                     shares = 0
                     investment = 0
                     monthly_dates = pd.date_range(start=start_date, end=end_date, freq='MS')
                     for m in monthly_dates:
                         if m in prices.index:
-                            price = prices.loc[m]
+                            price = prices[m]
                             shares += monthly_invest / price
                             investment += monthly_invest
                     final_value = shares * prices.iloc[-1]
@@ -154,7 +154,7 @@ with tab2:
 
                 cagr = ((final_value / initial) ** (1 / ((end_date - start_date).days / 365.25)) - 1) * 100
                 returns = prices.pct_change().dropna()
-                sharpe = (returns.mean() * 252) / (returns.std() * np.sqrt(252)) if returns.std() != 0 else 0
+                sharpe = (returns.mean() * 252) / (returns.std(ddof=0) * np.sqrt(252)) if returns.std(ddof=0) != 0 else 0
                 drawdown = ((prices / prices.cummax()) - 1).min() * 100
 
                 col1, col2 = st.columns([1.5, 1])
@@ -195,7 +195,7 @@ with tab2:
 **Sharpe**: {sharpe:.2f}  
 **Max Drawdown**: {drawdown:.1f}%
                         """
-                        st.download_button("Download PDF", report, f"backtest_{back_ticker}.txt")
+                        st.download_button("Download Report", report, f"backtest_{back_ticker}.txt")
 
 # === PORTFOLIO ===
 st.markdown("### Portfolio Overview")
