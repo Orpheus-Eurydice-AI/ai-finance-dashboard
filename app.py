@@ -98,7 +98,8 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="rocket")  # rocket emoji
+                # REMOVED st.toast() — NO MORE EMOJI ERRORS
+                st.markdown("**BULLISH ALERT! rocket**")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
