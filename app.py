@@ -98,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="rocket")  # rocket = valid emoji
+                st.toast("BULLISH ALERT!", icon="rocket")  # rocket = CORRECT
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -161,7 +161,7 @@ with col2:
         st.markdown("""
             <style>
             .stApp { background-color: #0e1117; color: #ffffff !important; }
-            h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText { color: #ffffff !important; }
+            h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
             .stMetric > div, .stMetric label { color: #ffffff !important; }
             .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #444 !important; }
             .stButton > button { color: #ffffff !important; background-color: #333 !important; border: 1px solid #555 !important; }
