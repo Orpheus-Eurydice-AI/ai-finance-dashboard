@@ -240,7 +240,7 @@ with col1:
 with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=1)
     if theme == "Dark":
-    st.markdown("""
+        st.markdown("""
         <style>
         .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
         h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
