@@ -98,7 +98,6 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                # BULLISH ALERT WITH rocket EMOJI
                 st.markdown("**BULLISH ALERT! rocket**")
 
                 for h in headlines[:3]:
@@ -157,7 +156,7 @@ with col1:
         st.info("Use browser print → Save as PDF")
 
 with col2:
-    theme = st.selectbox("Theme", ["Light", "Dark"], index=1)  # Default to Dark
+    theme = st.selectbox("Theme", ["Light", "Dark"], index=1)
     if theme == "Dark":
         st.markdown("""
             <style>
@@ -176,12 +175,17 @@ with col2:
                 background-color: #1e1e1e !important; 
                 border: 1px solid #555 !important; 
             }
+            /* ALL BUTTONS — VISIBLE */
             .stButton > button { 
                 color: #ffffff !important; 
                 background-color: #2d2d2d !important; 
                 border: 1px solid #555 !important; 
+                border-radius: 6px !important;
             }
-            /* SELECTBOX - FULLY VISIBLE */
+            .stButton > button:hover { 
+                background-color: #3d3d3d !important; 
+            }
+            /* SELECTBOX — FULLY VISIBLE */
             .stSelectbox > div > div { 
                 background-color: #1e1e1e !important; 
                 color: #ffffff !important; 
@@ -206,9 +210,13 @@ with col2:
                 color: #ffffff !important; 
                 border: 1px solid #1e5d8b !important;
             }
+            /* FORM BUTTONS (LOGIN) */
+            form button { 
+                background-color: #2d2d2d !important; 
+                color: #ffffff !important; 
+                border: 1px solid #555 !important; 
+            }
             </style>
             """, unsafe_allow_html=True)
-    else:
-        st.markdown("")  # Light mode = default
 
 st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
