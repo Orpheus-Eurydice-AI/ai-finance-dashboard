@@ -78,6 +78,83 @@ if st.button("Analyze"):
                 st.metric("7-Day Forecast", f"${forecast:.2f}", f"{pct:+.1f}%")
             with col3:
                 st.metric("30-Day Volatility", f"{volatility:.1f}%")
+             
+import pandas as pd
+from polygon import RESTClient
+from datetime import datetime, date
+
+st.header("Backtesting: Sentiment-Based Strategy")
+
+# Inputs (customize as needed; hardcoded TSLA for now based on your screenshot)
+stock = "TSLA"  # Could change to st.text_input("Stock Ticker", "TSLA") for flexibility
+start_date = st.date_input("Start Date", value=date(2024, 1, 1))
+end_date = st.date_input("End Date", value=date(2024, 12, 31))
+
+if st.button("Run Backtest"):
+    try:
+        client = RESTClient(st.secrets["POLYGON_API_KEY"])
+        
+        # Fetch historical daily price data
+        aggs = client.get_aggs(
+            ticker=stock,
+            multiplier=1,
+            timespan="day",
+            from_=start_date.strftime("%Y-%m-%d"),
+            to=end_date.strftime("%Y-%m-%d")
+        )
+        df = pd.DataFrame(aggs)
+        df['date'] = pd.to_datetime(df['timestamp'], unit='ms').dt.date
+        df.set_index('date', inplace=True)
+        df = df[['close']]
+        
+        # Fetch historical news (up to 1000 items; for longer periods, you may need pagination logic)
+        news_iter = client.list_ticker_news(
+            ticker=stock,
+            published_utc_gte=start_date.strftime("%Y-%m-%d"),
+            published_utc_lte=end_date.strftime("%Y-%m-%d"),
+            limit=1000,
+            order="asc"
+        )
+        news_list = list(news_iter)
+        
+        # Compute daily average sentiment from news titles
+        daily_sent = {}
+        for n in news_list:
+            pub_date = datetime.fromisoformat(n.published_utc.rstrip('Z')).date()
+            title = n.title
+            polarity = TextBlob(title).sentiment.polarity
+            if pub_date in daily_sent:
+                daily_sent[pub_date].append(polarity)
+            else:
+                daily_sent[pub_date] = [polarity]
+        
+        # Average sentiments per day
+        for d in list(daily_sent.keys()):
+            daily_sent[d] = sum(daily_sent[d]) / len(daily_sent[d])
+        
+        # Add sentiment to price DataFrame
+        df['sentiment'] = pd.Series(daily_sent)
+        df['sentiment'] = df['sentiment'].fillna(0)  # Neutral if no news
+        
+        # Compute daily returns
+        df['ret'] = df['close'].pct_change()
+        
+        # Strategy returns: Multiply daily return by 1 if prev day's sentiment > 0, else 0
+        df['strategy_ret'] = df['ret'] * (df['sentiment'].shift(1) > 0)
+        
+        # Cumulative returns
+        df['strategy_cum'] = (1 + df['strategy_ret']).cumprod().fillna(1)
+        df['buy_hold_cum'] = (1 + df['ret']).cumprod().fillna(1)
+        
+        # Display results
+        st.subheader("Backtest Summary Table")
+        st.dataframe(df[['close', 'sentiment', 'strategy_cum', 'buy_hold_cum']])
+        
+        st.subheader("Cumulative Returns Chart")
+        st.line_chart(df[['strategy_cum', 'buy_hold_cum']])
+    
+    except Exception as e:
+        st.error(f"Error running backtest: {str(e)}. Check your API key, dates, or network.")
 
             # News Sentiment (Mock)
             headlines = [
