@@ -239,32 +239,32 @@ with col1:
         st.info("Use browser print to Save as PDF")
 with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=1)
-    if theme == "Dark":
-    st.markdown("""
-        <style>
-        .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
-        h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
-        .stMetric > div, .stMetric label, .stMetric > div > div { color: #ffffff !important; }
-        .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #555 !important; }
-        .stButton > button { color: #ffffff !important; background-color: #2d2d2d !important; border: 1px solid #555 !important; }
-        .stButton > button:hover { background-color: #3d3d3d !important; }
-        [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
+        if theme == "Dark":
+            st.markdown("""
+                <style>
+                .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
+                h1, h2, h3, h4, h5, h6, p, div, span, label, .stMarkdown, .stText, .stCode { color: #ffffff !important; }
+                .stMetric > div, .stMetric label, .stMetric > div > div { color: #ffffff !important; }
+                .stTextInput > div > div > input { color: #ffffff !important; background-color: #1e1e1e !important; border: 1px solid #555 !important; }
+                .stButton > button { color: #ffffff !important; background-color: #2d2d2d !important; border: 1px solid #555 !important; }
+                .stButton > button:hover { background-color: #3d3d3d !important; }
+                [data-testid="stFormSubmitButton"] > button { background-color: #2d2d2d !important; color: #ffffff !important; border: 1px solid #555 !important; }
 
-        /* SELECTBOX — FULLY VISIBLE + DROPDOWN MENU */
-        .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
-        .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
-        .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
-        .stSelectbox [data-baseweb="select"] { color: #ffffff !important; }
-        .stSelectbox [data-baseweb="select"] * { color: #ffffff !important; }
+                /* SELECTBOX — FULLY VISIBLE + DROPDOWN MENU */
+                .stSelectbox > div > div { background-color: #1e1e1e !important; color: #ffffff !important; border: 1px solid #555 !important; }
+                .stSelectbox > div > div > div { background-color: #1e1e1e !important; color: #ffffff !important; }
+                .stSelectbox [data-baseweb="select"] > div { background-color: #1e1e1e !important; color: #ffffff !important; }
+                .stSelectbox [data-baseweb="select"] { color: #ffffff !important; }
+                .stSelectbox [data-baseweb="select"] * { color: #ffffff !important; }
 
-        /* DROPDOWN MENU OPTIONS — WHITE TEXT ON DARK */
-        [data-baseweb="menu"] { background-color: #1e1e1e !important; }
-        [data-baseweb="menu"] div { color: #ffffff !important; background-color: #1e1e1e !important; }
-        [data-baseweb="menu"] div:hover { background-color: #2d2d2d !important; color: #ffffff !important; }
+                /* DROPDOWN MENU OPTIONS — WHITE TEXT ON DARK */
+                [data-baseweb="menu"] { background-color: #1e1e1e !important; }
+                [data-baseweb="menu"] div { color: #ffffff !important; background-color: #1e1e1e !important; }
+                [data-baseweb="menu"] div:hover { background-color: #2d2d2d !important; color: #ffffff !important; }
 
-        .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
-        .stInfo { background-color: #0e3d6b !important; color: #ffffff !important; border: 1px solid #1e5d8b !important; }
-        </style>
-        """, unsafe_allow_html=True)
+                .stSuccess { background-color: #1a4d1a !important; color: #ffffff !important; border: 1px solid #2a6d2a !important; }
+                .stInfo { background-color: #0e3d6b !important; color: #ffffff !important; border: 1px solid #1e5d8b !important; }
+                </style>
+                """, unsafe_allow_html=True)
 
 st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
