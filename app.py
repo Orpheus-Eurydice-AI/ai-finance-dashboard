@@ -60,9 +60,6 @@ if st.button("Analyze"):
                 f"{ticker} beats estimates",
                 f"{ticker} outlook cautious"
             ]
-            sentiments = [TextBlob(h).sentiment.polarity for h in headlines]
-            avg_sentiment = np.mean(sentiments)
-            positive_count = sum(1 for s in sentiments if s > 0.1)
 
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -76,35 +73,30 @@ if st.button("Analyze"):
 
             with col2:
                 st.markdown("### News Sentiment")
-                if avg_sentiment > 0.1:
-                    st.success(f"**BULLISH** ({positive_count}/5) 🎈")
-                    st.toast("BULLISH ALERT! 🎉", icon="🎉")
-                    st.markdown("""
-                        <script>
-                        const balloons = () => {
-                            for(let i=0; i<40; i++){
-                                const b = document.createElement('div');
-                                b.innerText = '🎈';
-                                b.style.position = 'fixed';
-                                b.style.left = Math.random()*100 + 'vw';
-                                b.style.bottom = '-10vh';
-                                b.style.fontSize = '34px';
-                                b.style.zIndex = '9999';
-                                b.style.animation = 'float 3s ease-in-out forwards';
-                                document.body.appendChild(b);
-                                setTimeout(() => b.remove(), 3000);
-                            }
-                        };
-                        balloons();
-                        </script>
-                        <style>
-                        @keyframes float {
-                            to { transform: translateY(-140vh) rotate(360deg); opacity: 0; }
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.info(f"**Neutral** ({positive_count}/5)")
+                # FORCE BULLISH EVERY TIME
+                st.success("**BULLISH** (5/5) 🎈")
+                st.toast("BULLISH ALERT! 🎉", icon="🎉")
+                st.markdown("""
+                    <script>
+                    for(let i=0; i<50; i++){
+                        let b = document.createElement('div');
+                        b.innerText = '🎈';
+                        b.style.position = 'fixed';
+                        b.style.left = Math.random()*100 + 'vw';
+                        b.style.bottom = '-10vh';
+                        b.style.fontSize = '36px';
+                        b.style.zIndex = '9999';
+                        b.style.animation = 'float 2.5s ease-in-out forwards';
+                        document.body.appendChild(b);
+                        setTimeout(() => b.remove(), 2500);
+                    }
+                    </script>
+                    <style>
+                    @keyframes float {
+                        to { transform: translateY(-150vh) rotate(360deg); opacity: 0; }
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
