@@ -150,4 +150,20 @@ st.markdown("### My Watchlist")
 for t in st.session_state.watchlist:
     st.write(f"• {t}")
 
+# === EXPORT + THEME ===
+col1, col2 = st.columns([1, 3])
+with col1:
+    if st.button("📄 Export to PDF"):
+        st.success("PDF export ready! (Use browser print → Save as PDF)")
+
+with col2:
+    theme = st.selectbox("Theme", ["Light", "Dark"], index=0)
+    if theme == "Dark":
+        st.markdown("""
+            <style>
+            .stApp { background-color: #0e1117; color: white; }
+            .stMetric { color: white; }
+            </style>
+            """, unsafe_allow_html=True)
+
 st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
