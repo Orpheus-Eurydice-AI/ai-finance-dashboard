@@ -239,7 +239,7 @@ with col1:
         st.info("Use browser print to Save as PDF")
 with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=1)
-        if theme == "Dark":
+    if theme == "Dark":
             st.markdown("""
                 <style>
                 .stApp { background-color: #0e1117 !important; color: #ffffff !important; }
