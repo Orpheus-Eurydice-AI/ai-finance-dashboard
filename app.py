@@ -166,6 +166,7 @@ with tab2:
                                         cum_shares += monthly_invest / price
                                         cum_invest += monthly_invest
                                 portfolio_values.append(cum_shares * prices.asof(date))
+
                             final_value = cum_shares * last_price
                             pnl = final_value - initial
 
@@ -173,10 +174,10 @@ with tab2:
                     years = (end_date - start_date).days / 365.25
                     cagr = ((final_value / initial) ** (1 / years) - 1) * 100 if years > 0 else 0
                     returns = prices.pct_change().dropna()
-                    if len(returns) > 0 and not returns.isnull().all():
+                    if len(returns) > 0:
                         mean_ret = returns.mean()
                         std_dev = returns.std(ddof=0)
-                        sharpe = (mean_ret * 252) / (std_dev * math.sqrt(252)) if std_dev > 0 else 0
+                        sharpe = (mean_ret * 252) / (std_dev * np.sqrt(252)) if std_dev > 0 else 0
                         drawdown = ((prices / prices.cummax()) - 1).min() * 100
                     else:
                         mean_ret = 0
@@ -264,7 +265,7 @@ with col2:
             .stSelectbox > div > div > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
             .stSelectbox [data-baseweb="select"] > div { background-color: #f0f0f0 !important; color: #0e1117 !important; }
 
-            /* DROPDOWN MENU — LIGHT BG + DARK TEXT + HIGH CONTRAST */
+            /* DROPDOWN MENU — DARK TEXT on LIGHT BG + HIGH CONTRAST */
             [data-baseweb="menu"] { 
                 background-color: #f0f0f0 !important; 
                 border: 1px solid #ddd !important;
@@ -273,7 +274,7 @@ with col2:
             [data-baseweb="menu"] div { 
                 color: #0e1117 !important; 
                 background-color: #f0f0f0 !important; 
-                font-weight: 500 !important;
+                font-weight: 600 !important;
                 padding: 10px 16px !important;
             }
             [data-baseweb="menu"] div:hover { 
