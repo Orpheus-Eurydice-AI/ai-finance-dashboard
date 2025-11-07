@@ -75,11 +75,12 @@ if st.button("Analyze"):
                 st.markdown("### News Sentiment")
                 st.success("**BULLISH** (5/5)")
 
+                # BALLOONS (no emoji in JS)
                 components.html("""
                     <script>
                     for(let i=0; i<50; i++){
                         let b = document.createElement('div');
-                        b.innerText = 'Balloon';
+                        b.innerText = '🎈';
                         b.style.position = 'fixed';
                         b.style.left = Math.random()*100 + 'vw';
                         b.style.bottom = '-10vh';
@@ -97,7 +98,7 @@ if st.button("Analyze"):
                     </style>
                 """, height=0, width=0)
 
-                st.toast("BULLISH ALERT!", icon="Party")
+                st.toast("BULLISH ALERT!", icon="🎉")  # Valid emoji
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -117,7 +118,7 @@ if st.button("Analyze"):
                 st.metric("30-Day Volatility", f"{volatility:.1f}%")
 
             if pct > 5:
-                st.success("**STRONG BUY SIGNAL** Rocket")
+                st.success("**STRONG BUY SIGNAL** 🚀")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
@@ -151,8 +152,8 @@ for t, p in portfolio.items():
 # === EXPORT + THEME ===
 col1, col2 = st.columns([1, 3])
 with col1:
-    if st.button("PDF Export"):
-        st.success("Use browser print → Save as PDF")
+    if st.button("📄 Export to PDF"):
+        st.info("Use browser print → Save as PDF")
 
 with col2:
     theme = st.selectbox("Theme", ["Light", "Dark"], index=0)
@@ -160,7 +161,8 @@ with col2:
         st.markdown("""
             <style>
             .stApp { background-color: #0e1117; color: white; }
-            .stMetric { color: white; }
+            .stMetric > div { color: white !important; }
+            h1, h2, h3, h4 { color: white; }
             </style>
             """, unsafe_allow_html=True)
 
