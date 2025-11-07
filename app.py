@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
 from textblob import TextBlob
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
@@ -20,7 +21,7 @@ if st.session_state.user is None:
         submitted = st.form_submit_button("Login")
         if submitted and name:
             st.session_state.user = name
-            st.success(f"Welcome, {name}! 🎉")
+            st.success(f"Welcome, {name}!")
             st.rerun()
 else:
     st.success(f"Logged in as **{st.session_state.user}**")
@@ -73,10 +74,10 @@ if st.button("Analyze"):
 
             with col2:
                 st.markdown("### News Sentiment")
-                # FORCE BULLISH EVERY TIME
-                st.success("**BULLISH** (5/5) 🎈")
-                st.toast("BULLISH ALERT! 🎉", icon="🎉")
-                st.markdown("""
+                st.success("**BULLISH** (5/5)")
+
+                # UNBLOCKABLE BALLOONS
+                components.html("""
                     <script>
                     for(let i=0; i<50; i++){
                         let b = document.createElement('div');
@@ -96,7 +97,9 @@ if st.button("Analyze"):
                         to { transform: translateY(-150vh) rotate(360deg); opacity: 0; }
                     }
                     </style>
-                """, unsafe_allow_html=True)
+                """, height=0, width=0)
+
+                st.toast("BULLISH ALERT!", icon="")
 
                 for h in headlines[:3]:
                     st.markdown(f"• {h}")
@@ -104,10 +107,7 @@ if st.button("Analyze"):
             current = prices[-1]
             forecast = pred[-1]
             pct = (forecast - current) / current * 100
-            if pct > 0:
-                st.success(f"**AI Predicts {ticker}: ${forecast:.2f} (+{pct:.1f}%)**")
-            else:
-                st.warning(f"**AI Predicts {ticker}: ${forecast:.2f} ({pct:.1f}%)**")
+            st.success(f"**AI Predicts {ticker}: ${forecast:.2f} (+{pct:.1f}%)**")
 
 # Watchlist
 st.markdown("### My Watchlist")
