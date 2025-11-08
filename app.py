@@ -62,12 +62,17 @@ if st.button("Analyze"):
                 ax.legend()
                 ax.grid(True)
                 st.pyplot(fig)
-                current = prices[-1]
-                forecast = pred[-1]
+                current = float(prices[-1])
+                forecast = float(pred[-1])
                 change = forecast - current
-                pct = (change / current) * 100 if current != 0 else 0
-                volatility_raw = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100 if len(prices) > 30 else 0.0
-                volatility = float(np.nan_to_num(volatility_raw, nan=0.0))
+                pct = (change / current) * 100 if current != 0 else 0.0
+                pct = float(np.nan_to_num(pct, nan=0.0))
+                recent_prices = prices[-30:]
+                if len(recent_prices) > 0:
+                    volatility = float(np.nanstd(recent_prices) / np.nanmean(recent_prices) * 100)
+                    volatility = float(np.nan_to_num(volatility, nan=0.0))
+                else:
+                    volatility = 0.0
                 st.markdown("### Forecast Summary")
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -129,53 +134,59 @@ if st.button("Run Backtest"):
     try:
         data = yf.download(ticker, start=start_date, end=end_date)
         if data.empty:
-            raise ValueError("No data fetched for the given dates.")
-        df = data[['Close']].rename(columns={'Close': 'close'})
-        df = df.reset_index()  # Ensure single-level index with 'Date' as column
-        # Fetch news
-        news = yf.Ticker(ticker).news
-        daily_sent = {}
-        for n in news:
-            if 'providerPublishTime' in n:
-                pub_date = datetime.fromtimestamp(n['providerPublishTime']).date()
-                polarity = TextBlob(n['title']).sentiment.polarity
-                if pub_date in daily_sent:
-                    daily_sent[pub_date].append(polarity)
-                else:
-                    daily_sent[pub_date] = [polarity]
-        # Average sentiments
-        for d in list(daily_sent.keys()):
-            daily_sent[d] = sum(daily_sent[d]) / len(daily_sent[d])
-        df['sentiment'] = df['Date'].apply(lambda x: daily_sent.get(x.date(), 0))
-        df['ret'] = df['close'].pct_change()
-        df['strategy_ret'] = df['ret'] * (df['sentiment'].shift(1) > 0)
-        df['strategy_cum'] = (1 + df['strategy_ret']).cumprod().fillna(1)
-        df['buy_hold_cum'] = (1 + df['ret']).cumprod().fillna(1)
-        # Rename for intuition
-        df = df.rename(columns={
-            'close': 'Closing Price',
-            'sentiment': 'Daily Sentiment Score',
-            'strategy_cum': 'Strategy Cumulative Return',
-            'buy_hold_cum': 'Buy & Hold Cumulative Return'
-        })
-        # Display table with config
-        st.subheader("Backtest Summary Table")
-        st.dataframe(
-            df[['Date', 'Closing Price', 'Daily Sentiment Score', 'Strategy Cumulative Return', 'Buy & Hold Cumulative Return']].set_index('Date'),
-            column_config={
-                "Closing Price": st.column_config.NumberColumn(format="$%.2f"),
-                "Daily Sentiment Score": st.column_config.NumberColumn(format="%.2f"),
-                "Strategy Cumulative Return": st.column_config.NumberColumn(format="%.2f"),
-                "Buy & Hold Cumulative Return": st.column_config.NumberColumn(format="%.2f")
-            },
-            use_container_width=True
-        )
-        # Chart with renamed columns
-        st.subheader("Cumulative Returns Chart")
-        chart_df = df.set_index('Date')[['Strategy Cumulative Return', 'Buy & Hold Cumulative Return']]
-        st.line_chart(chart_df)
-    except Exception as e:
-        st.error(f"Error running backtest: {str(e)}. Check dates or network.")
+            st.error("No data available for the selected dates. Adjust the range or check the ticker.")
+        else:
+            # Ensure single-level columns
+            if isinstance(data.columns, pd.MultiIndex):
+                data.columns = data.columns.get_level_values(0)
+            df = data[['Close']].rename(columns={'Close': 'close'})
+            df = df.reset_index()  # Single-level with 'Date' as column
+            # Fetch news
+            news = yf.Ticker(ticker).news
+            daily_sent = {}
+            for n in news:
+                if 'providerPublishTime' in n:
+                    pub_date = datetime.fromtimestamp(n['providerPublishTime']).date()
+                    polarity = TextBlob(n['title']).sentiment.polarity
+                    if pub_date in daily_sent:
+                        daily_sent[pub_date].append(polarity)
+                    else:
+                        daily_sent[pub_date] = [polarity]
+            # Average sentiments
+            for d in list(daily_sent.keys()):
+                daily_sent[d] = sum(daily_sent[d]) / len(daily_sent[d])
+            df['sentiment'] = df['Date'].apply(lambda x: daily_sent.get(x.date(), 0))
+            df['ret'] = df['close'].pct_change()
+            df['strategy_ret'] = df['ret'] * (df['sentiment'].shift(1) > 0)
+            df['strategy_cum'] = (1 + df['strategy_ret']).cumprod().fillna(1)
+            df['buy_hold_cum'] = (1 + df['ret']).cumprod().fillna(1)
+            # Rename for intuition
+            df = df.rename(columns={
+                'close': 'Closing Price',
+                'sentiment': 'Daily Sentiment Score',
+                'strategy_cum': 'Strategy Cumulative Return',
+                'buy_hold_cum': 'Buy & Hold Cumulative Return'
+            })
+            # Display table with config
+            st.subheader("Backtest Summary Table")
+            st.dataframe(
+                df[['Date', 'Closing Price', 'Daily Sentiment Score', 'Strategy Cumulative Return', 'Buy & Hold Cumulative Return']].set_index('Date'),
+                column_config={
+                    "Closing Price": st.column_config.NumberColumn(format="$%.2f", help="Daily closing price of the stock"),
+                    "Daily Sentiment Score": st.column_config.NumberColumn(format="%.2f", help="Average sentiment polarity from news headlines ( -1 bearish to +1 bullish)"),
+                    "Strategy Cumulative Return": st.column_config.NumberColumn(format="%.2f", help="Cumulative return from sentiment-based strategy"),
+                    "Buy & Hold Cumulative Return": st.column_config.NumberColumn(format="%.2f", help="Cumulative return from simple buy & hold")
+                },
+                use_container_width=True
+            )
+            # Chart with renamed columns (ensure single-level)
+            st.subheader("Cumulative Returns Chart")
+            chart_df = df.set_index('Date')[['Strategy Cumulative Return', 'Buy & Hold Cumulative Return']]
+            if isinstance(chart_df.columns, pd.MultiIndex):
+                chart_df.columns = chart_df.columns.get_level_values(0)
+            st.line_chart(chart_df)
+        except Exception as e:
+            st.error(f"Error running backtest: {str(e)}. Check dates or network.")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
