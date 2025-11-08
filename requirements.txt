@@ -4,4 +4,4 @@ scikit-learn
 pandas
 numpy
 textblob
-polygon-api-client
+yfinance
