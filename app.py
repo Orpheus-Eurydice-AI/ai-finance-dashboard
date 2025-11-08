@@ -190,15 +190,21 @@ if st.button("Run Backtest"):
 st.markdown("### Portfolio Overview")
 portfolio = {}
 total_value = 0
+client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])  # Initialize client here for portfolio
 for t in st.session_state.watchlist:
-    data = yf.Ticker(t).history(period="1d")
-    if not data.empty:
-        price = data['Close'].iloc[-1]
-        shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
-        st.session_state[f"shares_{t}"] = shares
-        value = shares * price
-        portfolio[t] = {"price": price, "shares": shares, "value": value}
-        total_value += value
+    try:
+        # Fetch last day's close price using Polygon
+        today = datetime.now().date().isoformat()
+        aggs = client.get_aggs(t, 1, "day", today, today)
+        if aggs:
+            price = aggs[0].close
+            shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
+            st.session_state[f"shares_{t}"] = shares
+            value = shares * price
+            portfolio[t] = {"price": price, "shares": shares, "value": value}
+            total_value += value
+    except Exception:
+        st.warning(f"Could not fetch price for {t}. Skipping.")
 col_a, col_b, col_c = st.columns(3)
 with col_a:
     st.metric("Total Value", f"${total_value:,.2f}")
