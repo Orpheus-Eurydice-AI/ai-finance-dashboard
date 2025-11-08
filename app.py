@@ -66,13 +66,10 @@ if st.button("Analyze"):
                 forecast = float(pred[-1])
                 change = forecast - current
                 pct = (change / current) * 100 if current != 0 else 0.0
-                pct = float(np.nan_to_num(pct, nan=0.0))
+                pct = float(np.nan_to_num(pct))
                 recent_prices = prices[-30:]
-                if len(recent_prices) > 0:
-                    volatility = float(np.nanstd(recent_prices) / np.nanmean(recent_prices) * 100)
-                    volatility = float(np.nan_to_num(volatility, nan=0.0))
-                else:
-                    volatility = 0.0
+                volatility = float(np.nanstd(recent_prices) / np.nanmean(recent_prices) * 100) if len(recent_prices) > 0 else 0.0
+                volatility = float(np.nan_to_num(volatility))
                 st.markdown("### Forecast Summary")
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -137,8 +134,7 @@ if st.button("Run Backtest"):
             st.error("No data available for the selected dates. Adjust the range or check the ticker.")
         else:
             # Ensure single-level columns
-            if isinstance(data.columns, pd.MultiIndex):
-                data.columns = data.columns.get_level_values(0)
+            data.columns = data.columns.get_level_values(0) if isinstance(data.columns, pd.MultiIndex) else data.columns
             df = data[['Close']].rename(columns={'Close': 'close'})
             df = df.reset_index()  # Single-level with 'Date' as column
             # Fetch news
@@ -182,11 +178,10 @@ if st.button("Run Backtest"):
             # Chart with renamed columns (ensure single-level)
             st.subheader("Cumulative Returns Chart")
             chart_df = df.set_index('Date')[['Strategy Cumulative Return', 'Buy & Hold Cumulative Return']]
-            if isinstance(chart_df.columns, pd.MultiIndex):
-                chart_df.columns = chart_df.columns.get_level_values(0)
+            chart_df.columns = pd.Index(chart_df.columns)  # Force single-level
             st.line_chart(chart_df)
-        except Exception as e:
-            st.error(f"Error running backtest: {str(e)}. Check dates or network.")
+    except Exception as e:
+        st.error(f"Error running backtest: {str(e)}. Check dates or network.")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
