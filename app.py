@@ -7,10 +7,33 @@ from sklearn.linear_model import LinearRegression  # For simple forecasting
 from datetime import datetime, timedelta, date  # For date handling
 from polygon import RESTClient  # For fetching financial data via Polygon API
 import streamlit.components.v1 as components  # For custom HTML components
+import time  # For retry delays
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
 st.markdown("*Real-time stock analysis + 7-day AI forecast + News Sentiment + Watchlist*")
+
+# Cached API fetch functions to avoid rate limits
+@st.cache_data(ttl=300)  # Cache for 5 min
+def cached_get_aggs(client, ticker, multiplier, timespan, from_date, to_date):
+    return client.get_aggs(ticker, multiplier, timespan, from_date, to_date)
+
+@st.cache_data(ttl=300)  # Cache for 5 min
+def cached_list_ticker_news(client, ticker, **kwargs):
+    return list(client.list_ticker_news(ticker, **kwargs))
+
+# Function with retry for 429 errors
+def api_call_with_retry(func, *args, max_retries=3, delay=15, **kwargs):
+    for attempt in range(max_retries):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            if '429' in str(e):
+                st.warning(f"Rate limit hit (attempt {attempt+1}/{max_retries}). Retrying in {delay}s...")
+                time.sleep(delay)
+            else:
+                raise e
+    raise Exception("Max retries exceeded due to rate limits.")
 
 # === LOGIN ===
 if "user" not in st.session_state:
@@ -45,7 +68,7 @@ if st.button("Analyze"):
             client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])
             end_date = datetime.now()
             start_date = end_date - timedelta(days=90)  # Approx 3 months
-            aggs = client.get_aggs(ticker, 1, "day", start_date.date().isoformat(), end_date.date().isoformat())
+            aggs = api_call_with_retry(cached_get_aggs, client, ticker, 1, "day", start_date.date().isoformat(), end_date.date().isoformat())
             if not aggs or len(aggs) < 7:
                 st.error("Invalid ticker or insufficient data. Try **NVDA**, **AAPL**, or **TSLA**.")
             else:
@@ -83,8 +106,8 @@ if st.button("Analyze"):
                 with col3:
                     st.metric("30-Day Volatility", f"{volatility:.1f}%")
                 # News Sentiment (Real via Polygon)
-                news_iter = client.list_ticker_news(ticker=ticker, limit=5)
-                headlines = [n.title for n in news_iter]
+                news_list = api_call_with_retry(cached_list_ticker_news, client, ticker=ticker, limit=5)
+                headlines = [n.title for n in news_list]
                 if headlines:
                     sentiments = [TextBlob(h).sentiment.polarity for h in headlines]
                     avg_sentiment = np.mean(sentiments)
@@ -135,26 +158,13 @@ if st.button("Run Backtest"):
     try:
         client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])
         # Fetch historical daily price data
-        aggs = client.get_aggs(
-            ticker=ticker,
-            multiplier=1,
-            timespan="day",
-            from_=start_date.strftime("%Y-%m-%d"),
-            to=end_date.strftime("%Y-%m-%d")
-        )
+        aggs = api_call_with_retry(cached_get_aggs, client, ticker, 1, "day", start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
         df = pd.DataFrame(aggs)
         df['date'] = pd.to_datetime(df['timestamp'], unit='ms').dt.date
         df.set_index('date', inplace=True)
         df = df[['close']]
-        # Fetch historical news (up to 1000 items; for longer periods, you may need pagination logic)
-        news_iter = client.list_ticker_news(
-            ticker=ticker,
-            published_utc_gte=start_date.strftime("%Y-%m-%d"),
-            published_utc_lte=end_date.strftime("%Y-%m-%d"),
-            limit=1000,
-            order="asc"
-        )
-        news_list = list(news_iter)
+        # Fetch historical news
+        news_list = api_call_with_retry(cached_list_ticker_news, client, ticker=ticker, published_utc_gte=start_date.strftime("%Y-%m-%d"), published_utc_lte=end_date.strftime("%Y-%m-%d"), limit=1000, order="asc")
         # Compute daily average sentiment from news titles
         daily_sent = {}
         for n in news_list:
@@ -193,9 +203,9 @@ total_value = 0
 client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])  # Initialize client here for portfolio
 for t in st.session_state.watchlist:
     try:
-        # Fetch last day's close price using Polygon
+        # Fetch last day's close price using Polygon with retry
         today = datetime.now().date().isoformat()
-        aggs = client.get_aggs(t, 1, "day", today, today)
+        aggs = api_call_with_retry(cached_get_aggs, client, t, 1, "day", today, today)
         if aggs:
             price = aggs[0].close
             shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
@@ -203,8 +213,8 @@ for t in st.session_state.watchlist:
             value = shares * price
             portfolio[t] = {"price": price, "shares": shares, "value": value}
             total_value += value
-    except Exception:
-        st.warning(f"Could not fetch price for {t}. Skipping.")
+    except Exception as e:
+        st.warning(f"Could not fetch price for {t}: {str(e)}. Skipping.")
 col_a, col_b, col_c = st.columns(3)
 with col_a:
     st.metric("Total Value", f"${total_value:,.2f}")
