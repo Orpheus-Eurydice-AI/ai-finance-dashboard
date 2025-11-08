@@ -128,9 +128,11 @@ end_date = st.date_input("End Date", value=date(2024, 12, 31))
 if st.button("Run Backtest"):
     try:
         data = yf.download(ticker, start=start_date, end=end_date)
+        if data.empty:
+            raise ValueError("No data fetched for the given dates.")
         df = data[['Close']].rename(columns={'Close': 'close'})
-        df.reset_index(inplace=True)  # Ensure single-level index
-        # Fetch historical news
+        df = df.reset_index()  # Ensure single-level index with 'Date' as column
+        # Fetch news
         news = yf.Ticker(ticker).news
         daily_sent = {}
         for n in news:
@@ -141,7 +143,7 @@ if st.button("Run Backtest"):
                     daily_sent[pub_date].append(polarity)
                 else:
                     daily_sent[pub_date] = [polarity]
-        # Average sentiments per day
+        # Average sentiments
         for d in list(daily_sent.keys()):
             daily_sent[d] = sum(daily_sent[d]) / len(daily_sent[d])
         df['sentiment'] = df['Date'].apply(lambda x: daily_sent.get(x.date(), 0))
@@ -156,10 +158,10 @@ if st.button("Run Backtest"):
             'strategy_cum': 'Strategy Cumulative Return',
             'buy_hold_cum': 'Buy & Hold Cumulative Return'
         })
-        # Display table with config for aesthetics
+        # Display table with config
         st.subheader("Backtest Summary Table")
         st.dataframe(
-            df[['Closing Price', 'Daily Sentiment Score', 'Strategy Cumulative Return', 'Buy & Hold Cumulative Return']],
+            df[['Date', 'Closing Price', 'Daily Sentiment Score', 'Strategy Cumulative Return', 'Buy & Hold Cumulative Return']].set_index('Date'),
             column_config={
                 "Closing Price": st.column_config.NumberColumn(format="$%.2f"),
                 "Daily Sentiment Score": st.column_config.NumberColumn(format="%.2f"),
@@ -170,7 +172,8 @@ if st.button("Run Backtest"):
         )
         # Chart with renamed columns
         st.subheader("Cumulative Returns Chart")
-        st.line_chart(df[['Strategy Cumulative Return', 'Buy & Hold Cumulative Return']])
+        chart_df = df.set_index('Date')[['Strategy Cumulative Return', 'Buy & Hold Cumulative Return']]
+        st.line_chart(chart_df)
     except Exception as e:
         st.error(f"Error running backtest: {str(e)}. Check dates or network.")
 
