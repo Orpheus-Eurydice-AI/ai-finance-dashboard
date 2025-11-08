@@ -203,16 +203,18 @@ total_value = 0
 client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])  # Initialize client here for portfolio
 for t in st.session_state.watchlist:
     try:
-        # Fetch last day's close price using Polygon with retry
+        # Fetch minute aggs for today (free tier workaround for timeframe)
         today = datetime.now().date().isoformat()
-        aggs = api_call_with_retry(cached_get_aggs, client, t, 1, "day", today, today)
+        aggs = api_call_with_retry(cached_get_aggs, client, t, 1, "minute", today, today)
         if aggs:
-            price = aggs[0].close
+            price = aggs[-1].close  # Use last minute's close as current price
             shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
             st.session_state[f"shares_{t}"] = shares
             value = shares * price
             portfolio[t] = {"price": price, "shares": shares, "value": value}
             total_value += value
+        else:
+            st.warning(f"No data available for {t} today. Skipping.")
     except Exception as e:
         st.warning(f"Could not fetch price for {t}: {str(e)}. Skipping.")
 col_a, col_b, col_c = st.columns(3)
