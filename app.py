@@ -7,7 +7,6 @@ from sklearn.linear_model import LinearRegression  # For simple forecasting
 from datetime import datetime, timedelta, date  # For date handling
 import yfinance as yf  # For fetching financial data
 import streamlit.components.v1 as components  # For custom HTML components
-import math  # For isnan check
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
@@ -67,9 +66,8 @@ if st.button("Analyze"):
                 forecast = pred[-1]
                 change = forecast - current
                 pct = (change / current) * 100 if current != 0 else 0
-                volatility = float(np.std(prices[-30:]) / np.mean(prices[-30:]) * 100) if len(prices) > 30 else 0.0
-                if math.isnan(volatility):
-                    volatility = 0.0
+                volatility_raw = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100 if len(prices) > 30 else 0.0
+                volatility = float(np.nan_to_num(volatility_raw, nan=0.0))
                 st.markdown("### Forecast Summary")
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -131,7 +129,8 @@ if st.button("Run Backtest"):
     try:
         data = yf.download(ticker, start=start_date, end=end_date)
         df = data[['Close']].rename(columns={'Close': 'close'})
-        # Fetch historical news (yfinance has limited historical news; use recent for sentiment approximation or expand if needed)
+        df.reset_index(inplace=True)  # Ensure single-level index
+        # Fetch historical news
         news = yf.Ticker(ticker).news
         daily_sent = {}
         for n in news:
@@ -142,18 +141,36 @@ if st.button("Run Backtest"):
                     daily_sent[pub_date].append(polarity)
                 else:
                     daily_sent[pub_date] = [polarity]
-        # Average sentiments per day (note: yfinance news is recent, so historical may be limited; consider alpha_vantage or other for full hist)
+        # Average sentiments per day
         for d in list(daily_sent.keys()):
             daily_sent[d] = sum(daily_sent[d]) / len(daily_sent[d])
-        df['sentiment'] = pd.Series(daily_sent).reindex(df.index).fillna(0)
+        df['sentiment'] = df['Date'].apply(lambda x: daily_sent.get(x.date(), 0))
         df['ret'] = df['close'].pct_change()
         df['strategy_ret'] = df['ret'] * (df['sentiment'].shift(1) > 0)
         df['strategy_cum'] = (1 + df['strategy_ret']).cumprod().fillna(1)
         df['buy_hold_cum'] = (1 + df['ret']).cumprod().fillna(1)
+        # Rename for intuition
+        df = df.rename(columns={
+            'close': 'Closing Price',
+            'sentiment': 'Daily Sentiment Score',
+            'strategy_cum': 'Strategy Cumulative Return',
+            'buy_hold_cum': 'Buy & Hold Cumulative Return'
+        })
+        # Display table with config for aesthetics
         st.subheader("Backtest Summary Table")
-        st.dataframe(df[['close', 'sentiment', 'strategy_cum', 'buy_hold_cum']])
+        st.dataframe(
+            df[['Closing Price', 'Daily Sentiment Score', 'Strategy Cumulative Return', 'Buy & Hold Cumulative Return']],
+            column_config={
+                "Closing Price": st.column_config.NumberColumn(format="$%.2f"),
+                "Daily Sentiment Score": st.column_config.NumberColumn(format="%.2f"),
+                "Strategy Cumulative Return": st.column_config.NumberColumn(format="%.2f"),
+                "Buy & Hold Cumulative Return": st.column_config.NumberColumn(format="%.2f")
+            },
+            use_container_width=True
+        )
+        # Chart with renamed columns
         st.subheader("Cumulative Returns Chart")
-        st.line_chart(df[['strategy_cum', 'buy_hold_cum']])
+        st.line_chart(df[['Strategy Cumulative Return', 'Buy & Hold Cumulative Return']])
     except Exception as e:
         st.error(f"Error running backtest: {str(e)}. Check dates or network.")
 
