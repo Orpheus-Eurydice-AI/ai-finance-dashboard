@@ -15,12 +15,12 @@ st.markdown("*Real-time stock analysis + 7-day AI forecast + News Sentiment + Wa
 
 # Cached API fetch functions to avoid rate limits
 @st.cache_data(ttl=300)  # Cache for 5 min
-def cached_get_aggs(client, ticker, multiplier, timespan, from_date, to_date):
-    return client.get_aggs(ticker, multiplier, timespan, from_date, to_date)
+def cached_get_aggs(_client, ticker, multiplier, timespan, from_date, to_date):
+    return _client.get_aggs(ticker, multiplier, timespan, from_date, to_date)
 
 @st.cache_data(ttl=300)  # Cache for 5 min
-def cached_list_ticker_news(client, ticker, **kwargs):
-    return list(client.list_ticker_news(ticker, **kwargs))
+def cached_list_ticker_news(_client, ticker, **kwargs):
+    return list(_client.list_ticker_news(ticker, **kwargs))
 
 # Function with retry for 429 errors
 def api_call_with_retry(func, *args, max_retries=3, delay=15, **kwargs):
