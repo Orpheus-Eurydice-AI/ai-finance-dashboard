@@ -5,35 +5,12 @@ import matplotlib.pyplot as plt  # For plotting charts
 from textblob import TextBlob  # For sentiment analysis
 from sklearn.linear_model import LinearRegression  # For simple forecasting
 from datetime import datetime, timedelta, date  # For date handling
-from polygon import RESTClient  # For fetching financial data via Polygon API
+import yfinance as yf  # For fetching financial data
 import streamlit.components.v1 as components  # For custom HTML components
-import time  # For retry delays
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
 st.markdown("*Real-time stock analysis + 7-day AI forecast + News Sentiment + Watchlist*")
-
-# Cached API fetch functions to avoid rate limits
-@st.cache_data(ttl=300)  # Cache for 5 min
-def cached_get_aggs(_client, ticker, multiplier, timespan, from_date, to_date):
-    return _client.get_aggs(ticker, multiplier, timespan, from_date, to_date)
-
-@st.cache_data(ttl=300)  # Cache for 5 min
-def cached_list_ticker_news(_client, ticker, **kwargs):
-    return list(_client.list_ticker_news(ticker, **kwargs))
-
-# Function with retry for 429 errors
-def api_call_with_retry(func, *args, max_retries=3, delay=15, **kwargs):
-    for attempt in range(max_retries):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            if '429' in str(e):
-                st.warning(f"Rate limit hit (attempt {attempt+1}/{max_retries}). Retrying in {delay}s...")
-                time.sleep(delay)
-            else:
-                raise e
-    raise Exception("Max retries exceeded due to rate limits.")
 
 # === LOGIN ===
 if "user" not in st.session_state:
@@ -65,18 +42,11 @@ if st.button("Add to Watchlist"):
 if st.button("Analyze"):
     with st.spinner("Fetching data..."):
         try:
-            client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=90)  # Approx 3 months
-            aggs = api_call_with_retry(cached_get_aggs, client, ticker, 1, "day", start_date.date().isoformat(), end_date.date().isoformat())
-            if not aggs or len(aggs) < 7:
+            data = yf.download(ticker, period="3mo")
+            if data.empty or len(data) < 7:
                 st.error("Invalid ticker or insufficient data. Try **NVDA**, **AAPL**, or **TSLA**.")
             else:
-                data = pd.DataFrame(aggs)
-                data['date'] = pd.to_datetime(data['timestamp'], unit='ms').dt.date
-                data.set_index('date', inplace=True)
-                data = data[['close']]
-                prices = data['close'].values
+                prices = data['Close'].values
                 days = np.arange(len(prices)).reshape(-1, 1)
                 model = LinearRegression()
                 model.fit(days, prices)
@@ -105,9 +75,9 @@ if st.button("Analyze"):
                     st.metric("7-Day Forecast", f"${forecast:.2f}", f"{pct:+.1f}%")
                 with col3:
                     st.metric("30-Day Volatility", f"{volatility:.1f}%")
-                # News Sentiment (Real via Polygon)
-                news_list = api_call_with_retry(cached_list_ticker_news, client, ticker=ticker, limit=5)
-                headlines = [n.title for n in news_list]
+                # News Sentiment (via yfinance)
+                news = yf.Ticker(ticker).news
+                headlines = [article['title'] for article in news]
                 if headlines:
                     sentiments = [TextBlob(h).sentiment.polarity for h in headlines]
                     avg_sentiment = np.mean(sentiments)
@@ -148,7 +118,7 @@ if st.button("Analyze"):
                 if pct > 5:
                     st.success("STRONG BUY SIGNAL")
         except Exception as e:
-            st.error(f"Error fetching data: {str(e)}. Check your API key or network.")
+            st.error(f"Error fetching data: {str(e)}. Check ticker or network.")
 
 # === BACKTESTING ===
 st.header("Backtesting: Sentiment-Based Strategy")
@@ -156,61 +126,48 @@ start_date = st.date_input("Start Date", value=date(2024, 1, 1))
 end_date = st.date_input("End Date", value=date(2024, 12, 31))
 if st.button("Run Backtest"):
     try:
-        client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])
-        # Fetch historical daily price data
-        aggs = api_call_with_retry(cached_get_aggs, client, ticker, 1, "day", start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
-        df = pd.DataFrame(aggs)
-        df['date'] = pd.to_datetime(df['timestamp'], unit='ms').dt.date
-        df.set_index('date', inplace=True)
-        df = df[['close']]
-        # Fetch historical news
-        news_list = api_call_with_retry(cached_list_ticker_news, client, ticker=ticker, published_utc_gte=start_date.strftime("%Y-%m-%d"), published_utc_lte=end_date.strftime("%Y-%m-%d"), limit=1000, order="asc")
-        # Compute daily average sentiment from news titles
+        data = yf.download(ticker, start=start_date, end=end_date)
+        df = data[['Close']].rename(columns={'Close': 'close'})
+        # Fetch historical news (yfinance has limited historical news; use recent for sentiment approximation or expand if needed)
+        news = yf.Ticker(ticker).news
         daily_sent = {}
-        for n in news_list:
-            pub_date = datetime.fromisoformat(n.published_utc.rstrip('Z')).date()
-            title = n.title
-            polarity = TextBlob(title).sentiment.polarity
-            if pub_date in daily_sent:
-                daily_sent[pub_date].append(polarity)
-            else:
-                daily_sent[pub_date] = [polarity]
-        # Average sentiments per day
+        for n in news:
+            pub_date = datetime.fromtimestamp(n['publisher']['publishTime'] / 1000).date() if 'publishTime' in n['publisher'] else None
+            if pub_date and 'title' in n:
+                polarity = TextBlob(n['title']).sentiment.polarity
+                if pub_date in daily_sent:
+                    daily_sent[pub_date].append(polarity)
+                else:
+                    daily_sent[pub_date] = [polarity]
+        # Average sentiments per day (note: yfinance news is recent, so historical may be limited; consider alpha_vantage or other for full hist)
         for d in list(daily_sent.keys()):
             daily_sent[d] = sum(daily_sent[d]) / len(daily_sent[d])
-        # Add sentiment to price DataFrame
-        df['sentiment'] = pd.Series(daily_sent)
-        df['sentiment'] = df['sentiment'].fillna(0)  # Neutral if no news
-        # Compute daily returns
+        df['sentiment'] = pd.Series(daily_sent).reindex(df.index).fillna(0)
         df['ret'] = df['close'].pct_change()
-        # Strategy returns: Multiply daily return by 1 if prev day's sentiment > 0, else 0
         df['strategy_ret'] = df['ret'] * (df['sentiment'].shift(1) > 0)
-        # Cumulative returns
         df['strategy_cum'] = (1 + df['strategy_ret']).cumprod().fillna(1)
         df['buy_hold_cum'] = (1 + df['ret']).cumprod().fillna(1)
-        # Display results
         st.subheader("Backtest Summary Table")
         st.dataframe(df[['close', 'sentiment', 'strategy_cum', 'buy_hold_cum']])
         st.subheader("Cumulative Returns Chart")
         st.line_chart(df[['strategy_cum', 'buy_hold_cum']])
     except Exception as e:
-        st.error(f"Error running backtest: {str(e)}. Check your API key, dates, or network.")
+        st.error(f"Error running backtest: {str(e)}. Check dates or network.")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
 portfolio = {}
 total_value = 0
-client = RESTClient(api_key=st.secrets["POLYGON_API_KEY"])  # Initialize client here for portfolio
 for t in st.session_state.watchlist:
     try:
-        # Use get_last_trade for current price (free tier workaround)
-        last_trade = api_call_with_retry(client.get_last_trade, t)
-        price = last_trade.price
-        shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
-        st.session_state[f"shares_{t}"] = shares
-        value = shares * price
-        portfolio[t] = {"price": price, "shares": shares, "value": value}
-        total_value += value
+        data = yf.Ticker(t).history(period="1d")
+        if not data.empty:
+            price = data['Close'].iloc[-1]
+            shares = st.number_input(f"Shares of {t}", min_value=0, value=st.session_state.get(f"shares_{t}", 10), key=f"input_{t}")
+            st.session_state[f"shares_{t}"] = shares
+            value = shares * price
+            portfolio[t] = {"price": price, "shares": shares, "value": value}
+            total_value += value
     except Exception as e:
         st.warning(f"Could not fetch price for {t}: {str(e)}. Skipping.")
 col_a, col_b, col_c = st.columns(3)
