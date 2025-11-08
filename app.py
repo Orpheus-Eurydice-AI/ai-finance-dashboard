@@ -80,7 +80,7 @@ if st.button("Analyze"):
                     st.metric("30-Day Volatility", f"{volatility:.1f}%")
                 # News Sentiment (via yfinance)
                 news = yf.Ticker(ticker).news
-                headlines = [article['title'] for article in news]
+                headlines = [article.get('title', '') for article in news if 'title' in article]
                 if headlines:
                     sentiments = [TextBlob(h).sentiment.polarity for h in headlines]
                     avg_sentiment = np.mean(sentiments)
@@ -143,7 +143,7 @@ if st.button("Run Backtest"):
             for n in news:
                 if 'providerPublishTime' in n:
                     pub_date = datetime.fromtimestamp(n['providerPublishTime']).date()
-                    polarity = TextBlob(n['title']).sentiment.polarity
+                    polarity = TextBlob(n.get('title', '')).sentiment.polarity
                     if pub_date in daily_sent:
                         daily_sent[pub_date].append(polarity)
                     else:
