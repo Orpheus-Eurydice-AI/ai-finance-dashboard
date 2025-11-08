@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression  # For simple forecasting
 from datetime import datetime, timedelta, date  # For date handling
 import yfinance as yf  # For fetching financial data
 import streamlit.components.v1 as components  # For custom HTML components
+import math  # For isnan check
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
@@ -66,7 +67,9 @@ if st.button("Analyze"):
                 forecast = pred[-1]
                 change = forecast - current
                 pct = (change / current) * 100 if current != 0 else 0
-                volatility = np.std(prices[-30:]) / np.mean(prices[-30:]) * 100 if len(prices) > 30 else 0
+                volatility = float(np.std(prices[-30:]) / np.mean(prices[-30:]) * 100) if len(prices) > 30 else 0.0
+                if math.isnan(volatility):
+                    volatility = 0.0
                 st.markdown("### Forecast Summary")
                 col1, col2, col3 = st.columns(3)
                 with col1:
@@ -132,8 +135,8 @@ if st.button("Run Backtest"):
         news = yf.Ticker(ticker).news
         daily_sent = {}
         for n in news:
-            pub_date = datetime.fromtimestamp(n['publisher']['publishTime'] / 1000).date() if 'publishTime' in n['publisher'] else None
-            if pub_date and 'title' in n:
+            if 'providerPublishTime' in n:
+                pub_date = datetime.fromtimestamp(n['providerPublishTime']).date()
                 polarity = TextBlob(n['title']).sentiment.polarity
                 if pub_date in daily_sent:
                     daily_sent[pub_date].append(polarity)
