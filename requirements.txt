@@ -5,3 +5,4 @@ pandas
 numpy
 textblob
 yfinance
+pycoingecko
