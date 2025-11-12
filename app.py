@@ -14,6 +14,8 @@ cg = CoinGeckoAPI()
 
 def get_crypto_data(coin_id, days=30):
     data = cg.get_coin_market_chart_by_id(id=coin_id, vs_currency='usd', days=days)
+    if 'prices' not in data:
+        raise ValueError("Invalid coin ID or no data available")
     prices = data['prices']
     df = pd.DataFrame(prices, columns=['timestamp', 'price'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
@@ -243,6 +245,8 @@ for a_type, a_id in st.session_state.watchlist:
                 price = data['Close'].iloc[-1]
         else:  # Crypto
             price_data = cg.get_price(a_id, vs_currencies='usd')
+            if a_id not in price_data:
+                raise ValueError("Invalid coin ID")
             price = price_data[a_id]['usd']
         shares = st.number_input(f"Shares of {a_id} ({a_type})", min_value=0, value=st.session_state.get(f"shares_{a_type}_{a_id}", 10), key=f"input_{a_type}_{a_id}")
         st.session_state[f"shares_{a_type}_{a_id}"] = shares
