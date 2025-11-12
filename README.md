@@ -1,30 +1,30 @@
-# AI Finance Dashboard 📈
+AI Finance Dashboard 📈
+An interactive web app for real-time stock analysis, AI-driven forecasting, and portfolio management. Built from scratch in November 2025 as my first AI project — from zero coding experience to a deployed app with ML predictions in 2 weeks.
+What It Does
 
-An interactive Python tool for analyzing stock prices and generating AI-powered forecasts. Built from scratch in November 2025 as my first AI project — from zero coding experience to live predictions in 2 weeks.
+Pulls real-time stock data from Yahoo Finance (e.g., NVDA, AAPL)
+Displays historical charts (line, candlestick) with technical indicators (SMA, RSI)
+Uses AI models (LSTM via Keras) for 7-day price forecasts and news sentiment analysis
+Manages portfolios: Add stocks, track value/returns, assess risk (VaR)
+Interactive: Enter tickers → instant visuals with Plotly + export reports (PDF/CSV)
 
-## What It Does
-- Pulls **real-time stock data** from Yahoo Finance (e.g., NVDA, AAPL)
-- Plots **30-day price trends** with Matplotlib
-- Trains a **linear regression model** (scikit-learn) to predict next 7 days
-- Interactive: Type any ticker → instant chart + forecast
+Demo
+Live Streamlit Version
+Tech Stack
 
-## Demo
-[Live Colab Version](https://colab.research.google.com/drive/1PxjFgAmFOjNHz6sg75BKQtJ3eFHbo5zX)  
-**Latest Output**: AI predicts NVDA at $198.45 in 7 days (from $195.21).
+Python 3 + yfinance (data) + Plotly (charts) + scikit-learn/Keras (AI)
+Streamlit (web app) + GitHub/Streamlit Cloud (deployment)
 
-## Tech Stack
-- **Python 3** + yfinance (data) + matplotlib (charts) + scikit-learn (AI)
-- Google Colab (no install needed)
+Setup (Run Locally)
 
-## Setup (Run Locally)
-1. Clone: `git clone https://github.com/[your-username]/ai-finance-dashboard.git`
-2. Install: `pip install yfinance matplotlib scikit-learn`
-3. Run: `python dashboard.py` (add code file next)
+Clone: git clone https://github.com/[your-username]/ai-finance-dashboard.git
+Install: pip install streamlit yfinance plotly scikit-learn tensorflow
+Run: streamlit run app.py
 
-## Roadmap
-- Week 3: Deploy as live web app (Streamlit)
-- Week 4: Add news sentiment analysis (NLP)
-- Contribute? Open a PR!
+Roadmap
 
-**Built by Jack Evans** — Aspiring AI Entrepreneur | Moorpark College AS-T Business Admin  
-[LinkedIn](https://linkedin.com/in/jackevans) | [Email](mailto:jackpevans@yahoo.com.com)
+Week 3: Add crypto tracking (e.g., BTC via CoinGecko)
+Week 4: Integrate advanced NLP for sentiment + user auth
+Contribute? Open a PR!
+
+Built by Jack Evans — Aspiring AI Entrepreneur | Moorpark College AS-T Business Admin
