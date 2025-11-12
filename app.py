@@ -22,6 +22,7 @@ def get_crypto_data(coin_id, days=30):
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
 st.markdown("*Real-time stock/crypto analysis + 7-day AI forecast + News Sentiment + Watchlist*")
+st.info("For crypto, use valid IDs like 'bitcoin', 'ethereum' (lowercase). Find IDs on coingecko.com.")
 
 # === LOGIN ===
 if "user" not in st.session_state:
@@ -152,7 +153,7 @@ if st.button("Analyze"):
             if pct > 5:
                 st.success("STRONG BUY SIGNAL")
         except Exception as e:
-            st.error(f"Error fetching data: {str(e)}. Check ID or network.")
+            st.error(f"Error fetching data: {type(e).__name__}: {str(e)}. Check ID or network.")
 
 # === BACKTESTING ===
 st.header("Backtesting: Sentiment-Based Strategy (Stocks Only)")
@@ -228,7 +229,7 @@ else:
                 chart_df.columns = pd.Index(chart_df.columns)  # Force single-level
                 st.line_chart(chart_df)
         except Exception as e:
-            st.error(f"Error running backtest: {str(e)}. Check dates or network.")
+            st.error(f"Error running backtest: {type(e).__name__}: {str(e)}. Check dates or network.")
 
 # === PORTFOLIO P&L ===
 st.markdown("### Portfolio Overview")
@@ -249,7 +250,7 @@ for a_type, a_id in st.session_state.watchlist:
         portfolio[(a_type, a_id)] = {"price": price, "shares": shares, "value": value}
         total_value += value
     except Exception as e:
-        st.warning(f"Could not fetch price for {a_id} ({a_type}): {str(e)}. Skipping.")
+        st.warning(f"Could not fetch price for {a_id} ({a_type}): {type(e).__name__}: {str(e)}. Skipping.")
 col_a, col_b, col_c = st.columns(3)
 with col_a:
     st.metric("Total Value", f"${total_value:,.2f}")
@@ -307,5 +308,4 @@ with col2:
             </style>
             """, unsafe_allow_html=True)
 
-st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
 st.caption("Jack Evans | Moorpark College AS-T | Nov 2025")
