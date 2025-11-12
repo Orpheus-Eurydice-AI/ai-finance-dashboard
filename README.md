@@ -1,4 +1,5 @@
 AI Finance Dashboard 📈
+
 An interactive web app for real-time stock analysis, AI-driven forecasting, and portfolio management. Built from scratch in November 2025 as my first AI project — from zero coding experience to a deployed app with ML predictions in 2 weeks.
 What It Does
 
