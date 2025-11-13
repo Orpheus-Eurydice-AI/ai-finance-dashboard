@@ -13,16 +13,13 @@ from pycoingecko import CoinGeckoAPI  # For crypto data
 cg = CoinGeckoAPI()
 
 def get_crypto_data(coin_id, days=30):
-    try:
-        data = cg.get_coin_market_chart_by_id(id=coin_id, vs_currency='usd', days=days)
-        if 'prices' not in data or not data['prices']:
-            raise ValueError("Invalid coin ID or no data available")
-        prices = data['prices']
-        df = pd.DataFrame(prices, columns=['timestamp', 'price'])
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-        return df
-    except Exception as e:
-        raise ValueError(f"API error for {coin_id}: {str(e)}")
+    data = cg.get_coin_market_chart_by_id(id=coin_id, vs_currency='usd', days=days)
+    if 'prices' not in data or not data['prices']:
+        raise ValueError("Invalid coin ID or no data available")
+    prices = data['prices']
+    df = pd.DataFrame(prices, columns=['timestamp', 'price'])
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+    return df
 
 st.set_page_config(page_title="Jack Evans AI Finance", layout="centered")
 st.title("AI Finance Dashboard – Jack Evans")
@@ -59,17 +56,19 @@ else:
     asset_id = st.text_input("Enter Crypto ID (e.g., bitcoin)", "bitcoin").lower().strip()
 
 if st.button("Add to Watchlist"):
-    if asset_id and (asset_type, asset_id) not in st.session_state.watchlist and asset_id != '-1':
+    if not asset_id or not asset_id.isalnum() or asset_id == '-1':
+        st.error("Invalid ID. Use alphanumeric only, no '-1'.")
+    elif (asset_type, asset_id) in st.session_state.watchlist:
+        st.error("Already added.")
+    else:
         st.session_state.watchlist.append((asset_type, asset_id))
         st.success(f"{asset_id} ({asset_type}) added!")
-    else:
-        st.error("Invalid ID or already added.")
 
 # === ANALYZE ===
 st.header("Analyze Asset")
 if st.button("Analyze"):
-    if asset_id == '-1':
-        st.error("Invalid ID: -1 not allowed.")
+    if not asset_id or not asset_id.isalnum() or asset_id == '-1':
+        st.error("Invalid ID. Use alphanumeric only, no '-1'.")
     else:
         with st.spinner("Fetching data..."):
             try:
@@ -156,8 +155,8 @@ if st.button("Analyze"):
                             st.info(f"Neutral ({positive_count}/{len(sentiments)})")
                         for h in headlines[:3]:
                             st.markdown(f"• {h}")
-                    else:
-                        st.info("No recent news available.")
+                else:
+                    st.info("No recent news available.")
                 else:
                     st.info("News sentiment not available for crypto yet.")
                 if pct > 5:
@@ -253,7 +252,7 @@ for a_type, a_id in st.session_state.watchlist:
                 price = data['Close'].iloc[-1]
         else:  # Crypto
             price_data = cg.get_price(a_id, vs_currencies='usd')
-            if a_id not in price_data:
+            if not price_data or a_id not in price_data:
                 raise ValueError("Invalid coin ID or no data available")
             price = price_data[a_id]['usd']
         shares = st.number_input(f"Shares of {a_id} ({a_type})", min_value=0, value=st.session_state.get(f"shares_{a_type}_{a_id}", 10), key=f"input_{a_type}_{a_id}")
